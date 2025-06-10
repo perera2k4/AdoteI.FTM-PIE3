@@ -1,0 +1,14 @@
+[
+  {
+    "id": "a66f382b-c6be-44ac-bdec-9be1c1cbcad8",
+    "title": "teste",
+    "description": "teste",
+    "image": "http://localhost:5000/uploads/a66f382b-c6be-44ac-bdec-9be1c1cbcad8.webp"
+  },
+  {
+    "id": "9a70e8a4-9e97-48d7-a12e-a6bed2fb247f",
+    "title": "teste",
+    "description": "teste",
+    "image": "http://localhost:5000/uploads/9a70e8a4-9e97-48d7-a12e-a6bed2fb247f.webp"
+  }
+]
