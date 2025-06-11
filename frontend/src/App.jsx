@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import AddPost from "./components/AddPost";
 import Tasks from "./components/Tasks";
-import Title from "./components/Title";
+import NavBar from "./components/defaults/NavBar";
 import HotBar from "./components/defaults/HotBar";
 
 function App() {
@@ -28,15 +27,14 @@ function App() {
   }
 
   return (
-    <body>
+    <body >
+      <NavBar />
       <div className="w-full h-full p-2 flex justify-center mb-20">
         <div className="w-[70vh] space-y-4">
-          <Title>AdoteI.FTM</Title>
-          <AddPost onAddPostSubmit={onAddPostSubmit} />
           <Tasks tasks={tasks} />
         </div>
       </div>
-      <HotBar></HotBar>
+      <HotBar onAddPostSubmit={onAddPostSubmit} />
     </body>
   );
 }

@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid"; // Importar uuid
-import Input from "./Input";
+import { v4 as uuidv4 } from "uuid";
 
 function AddPost({ onAddPostSubmit }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState(null);
+  const [animalType, setAnimalType] = useState("dog"); // Estado para o tipo de animal
 
   const handleImageChange = (event) => {
     setImage(event.target.files[0]);
@@ -18,9 +18,10 @@ function AddPost({ onAddPostSubmit }) {
 
     const id = uuidv4(); // Gerar um id único para o post
     const formData = new FormData();
-    formData.append("id", id); // Enviar o id para o backend
+    formData.append("id", id);
     formData.append("title", title);
     formData.append("description", description);
+    formData.append("animalType", animalType); // Enviar o tipo de animal
     if (image) {
       formData.append("image", image);
     }
@@ -32,33 +33,44 @@ function AddPost({ onAddPostSubmit }) {
     });
 
     const data = await response.json();
-    const newTask = {
-      id, // Usar o mesmo id gerado
+    const newPost = {
+      id,
       title,
       description,
-      image: data.filePath, // URL da imagem retornada pelo backend
+      animalType,
+      image: data.filePath,
     };
 
-    onAddPostSubmit(newTask);
+    onAddPostSubmit(newPost);
     setTitle("");
     setDescription("");
     setImage(null);
+    setAnimalType("dog"); // Resetar o tipo de animal para o padrão
   };
 
   return (
     <div className="space-y-4 p-6 bg-slate-200 rounded-md shadow flex flex-col">
-      <Input
+      <input
         type="text"
-        placeholder="Digite o título"
+        placeholder="Digite o nome do pet"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        className="border p-2 rounded-md"
       />
-      <Input
-        type="text"
+      <textarea
         placeholder="Digite a descrição"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
+        className="border p-2 rounded-md"
       />
+      <select
+        value={animalType}
+        onChange={(e) => setAnimalType(e.target.value)}
+        className="border p-2 rounded-md"
+      >
+        <option value="dog">Cachorro</option>
+        <option value="cat">Gato</option>
+      </select>
       <input type="file" accept="image/*" onChange={handleImageChange} />
       <button
         onClick={handleSubmit}
