@@ -1,58 +1,56 @@
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 
 function AddPost({ onAddPostSubmit }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState(null);
-  const [animalType, setAnimalType] = useState("dog"); // Estado para o tipo de animal
+  const [animalType, setAnimalType] = useState("dog");
 
   const handleImageChange = (event) => {
     setImage(event.target.files[0]);
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !description.trim()) {
-      return alert("Preencha o título e a descrição.");
+    const username = localStorage.getItem("username"); // Obter o nome do usuário logado
+
+    if (!title.trim() || !description.trim() || !image || !username) {
+      return alert("Preencha todos os campos.");
     }
 
-    const id = uuidv4(); // Gerar um id único para o post
     const formData = new FormData();
-    formData.append("id", id);
     formData.append("title", title);
     formData.append("description", description);
-    formData.append("animalType", animalType); // Enviar o tipo de animal
-    if (image) {
-      formData.append("image", image);
+    formData.append("animalType", animalType);
+    formData.append("image", image);
+    formData.append("username", username); // Enviar o nome do usuário ao backend
+
+    try {
+      const response = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        onAddPostSubmit(data.post); // Atualizar o estado no App
+        setTitle("");
+        setDescription("");
+        setImage(null);
+        setAnimalType("dog");
+      } else {
+        alert(data.error || "Erro ao criar o post.");
+      }
+    } catch (error) {
+      console.error("Erro ao enviar o post:", error);
+      alert("Erro ao enviar o post.");
     }
-
-    // Enviar os dados para o backend
-    const response = await fetch("http://localhost:5000/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await response.json();
-    const newPost = {
-      id,
-      title,
-      description,
-      animalType,
-      image: data.filePath,
-    };
-
-    onAddPostSubmit(newPost);
-    setTitle("");
-    setDescription("");
-    setImage(null);
-    setAnimalType("dog"); // Resetar o tipo de animal para o padrão
   };
 
   return (
     <div className="space-y-4 p-6 bg-slate-200 rounded-md shadow flex flex-col">
       <input
         type="text"
-        placeholder="Digite o nome do pet"
+        placeholder="Digite o título"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         className="border p-2 rounded-md"
