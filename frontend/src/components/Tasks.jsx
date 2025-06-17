@@ -39,7 +39,7 @@ function Tasks({ tasks }) {
               className="relative flex flex-col rounded-md p-3 gap-2 bg-purple-400 hover:scale-105 transition-transform duration-300 cursor-pointer"
               onClick={() => handleItemClick(task)}
             >
-              <div className="absolute flex inset-0 top-[-10px] gap-2 flex justify-center text-sm text-gray-600 ">
+              <div className="absolute inset-0 top-[-10px] gap-2 flex justify-center text-sm text-gray-600 ">
                 <div className="flex justify-center items-center text-white gap-2 bg-purple-600 h-6 w-auto p-4 rounded-xl">
                   <User className="bg-slate-400 p-1 rounded-xl" />
                   <span className="font-medium text-sm sm:text-base">
