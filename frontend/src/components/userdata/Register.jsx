@@ -4,10 +4,11 @@ import { useNavigate } from "react-router-dom";
 export default function Register() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState(""); // Novo campo para telefone
   const navigate = useNavigate(); // Hook para redirecionamento
 
   const handleRegister = async () => {
-    if (!username.trim() || !password.trim()) {
+    if (!username.trim() || !password.trim() || !phoneNumber.trim()) {
       return alert("Preencha todos os campos.");
     }
 
@@ -15,7 +16,7 @@ export default function Register() {
       const response = await fetch("http://localhost:5000/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, isAdmin: false, phoneNumber }), // isAdmin definido como false
       });
 
       const data = await response.json();
@@ -46,6 +47,13 @@ export default function Register() {
         placeholder="Senha"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        className="border p-2 rounded-md w-full max-w-sm mb-4"
+      />
+      <input
+        type="tel"
+        placeholder="Telefone:"
+        value={phoneNumber}
+        onChange={(e) => setPhoneNumber(e.target.value)}
         className="border p-2 rounded-md w-full max-w-sm mb-4"
       />
       <button

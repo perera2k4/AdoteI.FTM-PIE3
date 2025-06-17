@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-// import AddPost from "./components/AddPost";
 import Tasks from "./components/Tasks";
 import NavBar from "./components/defaults/NavBar";
 import HotBar from "./components/defaults/HotBar";
@@ -27,35 +26,17 @@ function App() {
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
 
-  // Deletar um post
-  const onDeletePost = async (title) => {
-    try {
-      const response = await fetch(`http://localhost:5000/posts/${title}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setTasks((prevTasks) => prevTasks.filter((task) => task.title !== title));
-      } else {
-        const data = await response.json();
-        alert(data.error || "Erro ao deletar o post.");
-      }
-    } catch (error) {
-      console.error("Erro ao deletar o post:", error);
-      alert("Erro ao deletar o post.");
-    }
-  };
-
   return (
-    <body>
+    <div>
       <NavBar />
       <div className="w-full h-full p-2 flex justify-center mb-20">
         <div className="w-[70vh] space-y-4">
-          <Tasks tasks={tasks} onDeletePost={onDeletePost} />
+          {/* Passar tasks para o componente Tasks */}
+          <Tasks tasks={tasks} />
         </div>
       </div>
       <HotBar onAddPostSubmit={onAddPostSubmit} />
-    </body>
+    </div>
   );
 }
 

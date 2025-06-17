@@ -19,22 +19,25 @@ users_collection = db["users"]
 @app.route("/register", methods=["POST"])
 def register():
     try:
-        # Obter dados do formulário
         username = request.json.get("username")
         password = request.json.get("password")
+        phone_number = request.json.get("phoneNumber")
+        is_admin = request.json.get("isAdmin", False)
 
-        if not username or not password:
+        if not username or not password or not phone_number:
             return jsonify({"error": "Todos os campos são obrigatórios"}), 400
 
-        # Verificar se o usuário já existe
         if users_collection.find_one({"username": username}):
             return jsonify({"error": "Usuário já existe"}), 400
 
-        # Hash da senha
         hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
 
-        # Criar o usuário
-        user = {"username": username, "password": hashed_password.decode("utf-8")}
+        user = {
+            "username": username,
+            "password": hashed_password.decode("utf-8"),
+            "phoneNumber": phone_number,
+            "isAdmin": is_admin
+        }
         users_collection.insert_one(user)
 
         return jsonify({"message": "Usuário cadastrado com sucesso!"}), 201
@@ -45,23 +48,26 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
     try:
-        # Obter dados do formulário
         username = request.json.get("username")
         password = request.json.get("password")
 
         if not username or not password:
             return jsonify({"error": "Todos os campos são obrigatórios"}), 400
 
-        # Verificar se o usuário existe
         user = users_collection.find_one({"username": username})
+        print("Usuário encontrado no banco de dados:", user)  # Log para depuração
+
         if not user:
             return jsonify({"error": "Usuário não encontrado"}), 404
 
-        # Verificar a senha
         if not bcrypt.checkpw(password.encode("utf-8"), user["password"].encode("utf-8")):
             return jsonify({"error": "Senha incorreta"}), 401
 
-        return jsonify({"message": "Login realizado com sucesso!", "username": user["username"]}), 200
+        return jsonify({
+            "message": "Login realizado com sucesso!",
+            "username": user["username"],
+            "isAdmin": user.get("isAdmin", False)
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -69,32 +75,26 @@ def login():
 @app.route("/upload", methods=["POST"])
 def upload_post():
     try:
-        # Obter dados do formulário
         title = request.form.get("title")
         description = request.form.get("description")
         animal_type = request.form.get("animalType")
         image = request.files.get("image")
-        username = request.form.get("username")  # Nome do usuário que fez a publicação
+        username = request.form.get("username")
 
         if not title or not description or not animal_type or not image or not username:
             return jsonify({"error": "Todos os campos são obrigatórios"}), 400
 
-        # Converter a imagem para base64
         image_base64 = base64.b64encode(image.read()).decode("utf-8")
 
-        # Criar o post
         post = {
             "title": title,
             "description": description,
             "animalType": animal_type,
-            "image": image_base64,  # Armazenar a imagem como base64
-            "username": username,  # Nome do usuário que fez a publicação
+            "image": image_base64,
+            "username": username
         }
 
-        # Inserir o post no MongoDB
         result = posts_collection.insert_one(post)
-
-        # Adicionar o ID ao post criado
         post["_id"] = str(result.inserted_id)
 
         return jsonify({"message": "Post criado com sucesso!", "post": post}), 201
@@ -105,27 +105,13 @@ def upload_post():
 @app.route("/posts", methods=["GET"])
 def get_posts():
     try:
-        posts = list(posts_collection.find({}, {"_id": 0}))
+        posts = list(posts_collection.find({}))
+        for post in posts:
+            post["_id"] = str(post["_id"])
+            user = users_collection.find_one({"username": post["username"]})
+            if user:
+                post["phoneNumber"] = user.get("phoneNumber", None)
         return jsonify(posts), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# Rota para deletar um post
-@app.route("/posts/<title>", methods=["DELETE"])
-def delete_post(title):
-    try:
-        # Buscar o post pelo título
-        post = posts_collection.find_one({"title": title})
-        if not post:
-            return jsonify({"error": "Post não encontrado"}), 404
-
-        # Mover o post para a coleção "adotados"
-        adotados_collection.insert_one(post)
-
-        # Remover o post da coleção "posts"
-        posts_collection.delete_one({"title": title})
-
-        return jsonify({"message": "Post deletado e movido para adotados!"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -133,7 +119,9 @@ def delete_post(title):
 @app.route("/adotados", methods=["GET"])
 def get_adotados():
     try:
-        adotados = list(adotados_collection.find({}, {"_id": 0}))
+        adotados = list(adotados_collection.find({}))
+        for post in adotados:
+            post["_id"] = str(post["_id"])
         return jsonify(adotados), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
