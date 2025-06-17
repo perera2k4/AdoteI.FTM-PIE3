@@ -22,20 +22,21 @@ function App() {
   }, []);
 
   // Adicionar um novo post ao estado
-  function onAddPostSubmit(newTask) {
+  const onAddPostSubmit = (newTask) => {
     setTasks((prevTasks) => [...prevTasks, newTask]);
-  }
+  };
 
   return (
-    <body >
+    <div>
       <NavBar />
       <div className="w-full h-full p-2 flex justify-center mb-20">
         <div className="w-[70vh] space-y-4">
+          {/* Passar tasks para o componente Tasks */}
           <Tasks tasks={tasks} />
         </div>
       </div>
       <HotBar onAddPostSubmit={onAddPostSubmit} />
-    </body>
+    </div>
   );
 }
 

@@ -25,7 +25,7 @@ export default function HotBar({ onAddPostSubmit }) {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-md">
-            <h2 className="text-lg font-bold mb-4">Criar Post</h2>
+            <h2 className="text-lg font-bold mb-4">Criar publicação</h2>
             <AddPost
               onAddPostSubmit={(newPost) => {
                 onAddPostSubmit(newPost); // Enviar o post para o App
