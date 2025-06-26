@@ -2,9 +2,19 @@ import { useEffect, useState } from "react";
 import Tasks from "./components/Tasks";
 import NavBar from "./components/defaults/NavBar";
 import HotBar from "./components/defaults/HotBar";
+import { useNavigate } from "react-router-dom";
 
 function App() {
   const [tasks, setTasks] = useState([]);
+  const navigate = useNavigate();
+
+  // Proteger rota: se não estiver logado, redireciona para login
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user || !user.username) {
+      navigate("/");
+    }
+  }, [navigate]);
 
   // Buscar os posts do backend ao carregar a página
   useEffect(() => {
@@ -12,7 +22,7 @@ function App() {
       try {
         const response = await fetch("http://localhost:5000/posts");
         const data = await response.json();
-        setTasks(data); // Atualizar o estado com os posts do backend
+        setTasks(data);
       } catch (error) {
         console.error("Erro ao buscar os posts:", error);
       }
@@ -31,7 +41,6 @@ function App() {
       <NavBar />
       <div className="w-full h-full p-2 flex justify-center mb-20">
         <div className="w-[70vh] space-y-4">
-          {/* Passar tasks para o componente Tasks */}
           <Tasks tasks={tasks} />
         </div>
       </div>
