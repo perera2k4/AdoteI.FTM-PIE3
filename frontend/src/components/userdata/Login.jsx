@@ -43,9 +43,14 @@ export default function Login() {
       });
       const data = await response.json();
       if (response.ok) {
+        // Salva o token e dados do usuário
         localStorage.setItem(
           "user",
-          JSON.stringify({ username: data.username, isAdmin: data.isAdmin })
+          JSON.stringify({
+            username: data.username,
+            isAdmin: data.isAdmin,
+            token: data.token,
+          })
         );
         navigate("/posts");
       } else {
@@ -103,7 +108,6 @@ export default function Login() {
         id="login"
         className="relative bg-white w-[300px] md:w-[80vw] lg:w-[950px] h-[515px] md:h-[400px] rounded-2xl shadow-lg flex flex-col md:flex-row overflow-hidden"
       >
-        
         <div className="block md:hidden w-full h-[120px] bg-[#5e17eb33] flex items-center justify-center">
           <div
             className="w-32 h-24 bg-center bg-no-repeat bg-contain"
@@ -219,7 +223,7 @@ export default function Login() {
           )}
         </div>
       </section>
-      
+
       <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
         rel="stylesheet"

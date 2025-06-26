@@ -11,7 +11,9 @@ function AddPost({ onAddPostSubmit }) {
   };
 
   const handleSubmit = async () => {
-    const username = localStorage.getItem("username"); // Obter o nome do usuário logado
+    const user = JSON.parse(localStorage.getItem("user"));
+    const username = user?.username;
+    const token = user?.token;
 
     if (!title.trim() || !description.trim() || !image || !username) {
       return alert("Preencha todos os campos.");
@@ -22,17 +24,20 @@ function AddPost({ onAddPostSubmit }) {
     formData.append("description", description);
     formData.append("animalType", animalType);
     formData.append("image", image);
-    formData.append("username", username); // Enviar o nome do usuário ao backend
+    formData.append("username", username);
 
     try {
       const response = await fetch("http://localhost:5000/upload", {
         method: "POST",
         body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const data = await response.json();
       if (response.ok) {
-        onAddPostSubmit(data.post); // Atualizar o estado no App
+        onAddPostSubmit(data.post);
         setTitle("");
         setDescription("");
         setImage(null);
