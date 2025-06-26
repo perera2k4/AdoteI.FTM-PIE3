@@ -3,9 +3,16 @@ from flask_cors import CORS
 from pymongo import MongoClient
 import bcrypt
 import base64
+import jwt
+import datetime
 
 app = Flask(__name__)
 CORS(app)
+
+# Chave secreta para JWT (defina uma forte e secreta!)
+import secrets
+# print(secrets.token_hex(32))
+SECRET_KEY = secrets.token_hex(32)
 
 # Configuração do MongoDB
 MONGO_URI = "mongodb+srv://devbrunocarvalho:jO7Uy2UqCwPmrLOl@adoteiftm.4lsu0xb.mongodb.net/?retryWrites=true&w=majority&appName=AdoteIFTM"
@@ -14,6 +21,28 @@ db = client["AdoteIFTM"]
 posts_collection = db["posts"]
 adotados_collection = db["adotados"]
 users_collection = db["users"]
+
+# Função para proteger rotas
+def token_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            if auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+        if not token:
+            return jsonify({'error': 'Token ausente!'}), 401
+        try:
+            data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            current_user = users_collection.find_one({"username": data["username"]})
+            if not current_user:
+                return jsonify({'error': 'Usuário não encontrado!'}), 401
+        except Exception as e:
+            return jsonify({'error': 'Token inválido!'}), 401
+        return f(current_user, *args, **kwargs)
+    return decorated
 
 # Rota para cadastro de usuário
 @app.route("/register", methods=["POST"])
@@ -44,7 +73,7 @@ def register():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Rota para login de usuário
+# Rota para login de usuário (gera token JWT)
 @app.route("/login", methods=["POST"])
 def login():
     try:
@@ -55,7 +84,6 @@ def login():
             return jsonify({"error": "Todos os campos são obrigatórios"}), 400
 
         user = users_collection.find_one({"username": username})
-        print("Usuário encontrado no banco de dados:", user)  # Log para depuração
 
         if not user:
             return jsonify({"error": "Usuário não encontrado"}), 404
@@ -63,23 +91,38 @@ def login():
         if not bcrypt.checkpw(password.encode("utf-8"), user["password"].encode("utf-8")):
             return jsonify({"error": "Senha incorreta"}), 401
 
+        # Gera o token JWT
+        token = jwt.encode({
+            "username": user["username"],
+            "isAdmin": user.get("isAdmin", False),
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=2)
+        }, SECRET_KEY, algorithm="HS256")
+
         return jsonify({
             "message": "Login realizado com sucesso!",
             "username": user["username"],
-            "isAdmin": user.get("isAdmin", False)
+            "isAdmin": user.get("isAdmin", False),
+            "token": token
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Rota para criar um post
+# Exemplo de rota protegida
+@app.route("/protected", methods=["GET"])
+@token_required
+def protected(current_user):
+    return jsonify({"message": f"Bem-vindo, {current_user['username']}!"})
+
+# Rota para criar um post (protegida)
 @app.route("/upload", methods=["POST"])
-def upload_post():
+@token_required
+def upload_post(current_user):
     try:
         title = request.form.get("title")
         description = request.form.get("description")
         animal_type = request.form.get("animalType")
         image = request.files.get("image")
-        username = request.form.get("username")
+        username = current_user["username"]
 
         if not title or not description or not animal_type or not image or not username:
             return jsonify({"error": "Todos os campos são obrigatórios"}), 400
@@ -101,7 +144,7 @@ def upload_post():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Rota para listar todos os posts
+# Rota para listar todos os posts (pública)
 @app.route("/posts", methods=["GET"])
 def get_posts():
     try:
@@ -115,7 +158,7 @@ def get_posts():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Rota para listar todos os posts adotados
+# Rota para listar todos os posts adotados (pública)
 @app.route("/adotados", methods=["GET"])
 def get_adotados():
     try:
@@ -126,6 +169,5 @@ def get_adotados():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Iniciar o servidor
 if __name__ == "__main__":
     app.run(debug=True)
