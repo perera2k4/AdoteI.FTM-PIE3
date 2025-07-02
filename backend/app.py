@@ -17,7 +17,7 @@ CORS(app, origins=[
 ])
 
 # Configuração usando variáveis de ambiente
-SECRET_KEY = os.environ.get("SECRET_KEY", "sua_chave_jwt_super_secreta")
+SECRET_KEY = os.environ.get("SECRET_KEY", "beef8000bc175089cadf2701a9979ac4")
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://devbrunocarvalho:jO7Uy2UqCwPmrLOl@adoteiftm.4lsu0xb.mongodb.net/?retryWrites=true&w=majority&appName=AdoteIFTM")
 
 client = MongoClient(MONGO_URI)

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+// Configuração da URL da API
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 function Popup({ message, onClose }) {
   setTimeout(onClose, 7000);
   return (
@@ -36,21 +39,16 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
       const data = await response.json();
       if (response.ok) {
-        // Salva o token e dados do usuário
         localStorage.setItem(
           "user",
-          JSON.stringify({
-            username: data.username,
-            isAdmin: data.isAdmin,
-            token: data.token,
-          })
+          JSON.stringify({ username: data.username, isAdmin: data.isAdmin, token: data.token })
         );
         navigate("/posts");
       } else {
@@ -75,7 +73,7 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/register", {
+      const response = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -118,7 +116,6 @@ export default function Login() {
           id="imagem"
           className="hidden md:block md:w-[30%] lg:w-[50%] h-full bg-[#5e17eb33] bg-[url('assets/logo.png')] bg-center bg-no-repeat bg-contain"
         ></div>
-
         <div
           id="formulario"
           className="flex-1 flex flex-col justify-center px-6 py-8"
@@ -182,7 +179,7 @@ export default function Login() {
                   type="tel"
                   name="phone"
                   id="iphone"
-                  placeholder="88 99999-9999"
+                  placeholder="88999999999"
                   autoComplete="tel"
                   className="bg-transparent flex-1 outline-none py-2"
                   value={phoneNumber}
@@ -223,7 +220,6 @@ export default function Login() {
           )}
         </div>
       </section>
-
       <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
         rel="stylesheet"

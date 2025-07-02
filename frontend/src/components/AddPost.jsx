@@ -1,14 +1,15 @@
 import { useState } from "react";
+import Input from "./Input";
+import Button from "./Button";
+
+// Configuração da URL da API
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 function AddPost({ onAddPostSubmit }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState(null);
   const [animalType, setAnimalType] = useState("dog");
-
-  const handleImageChange = (event) => {
-    setImage(event.target.files[0]);
-  };
+  const [image, setImage] = useState(null);
 
   const handleSubmit = async () => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -27,7 +28,7 @@ function AddPost({ onAddPostSubmit }) {
     formData.append("username", username);
 
     try {
-      const response = await fetch("http://localhost:5000/upload", {
+      const response = await fetch(`${API_URL}/upload`, {
         method: "POST",
         body: formData,
         headers: {
@@ -42,6 +43,7 @@ function AddPost({ onAddPostSubmit }) {
         setDescription("");
         setImage(null);
         setAnimalType("dog");
+        alert("Post criado com sucesso!");
       } else {
         alert(data.error || "Erro ao criar o post.");
       }
@@ -52,35 +54,36 @@ function AddPost({ onAddPostSubmit }) {
   };
 
   return (
-    <div className="space-y-4 p-6 bg-slate-200 rounded-md shadow flex flex-col">
-      <input
+    <div className="space-y-4 p-6 bg-slate-200 rounded-md">
+      <h3 className="text-lg font-bold">Adicionar Novo Post</h3>
+      <Input
         type="text"
-        placeholder="Digite o título"
+        placeholder="Título do post"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="border p-2 rounded-md"
       />
       <textarea
-        placeholder="Digite a descrição"
+        className="border border-slate-300 outline-slate-400 px-4 py-2 rounded-md w-full"
+        placeholder="Descrição do post"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        className="border p-2 rounded-md"
+        rows={3}
       />
       <select
+        className="border border-slate-300 outline-slate-400 px-4 py-2 rounded-md w-full"
         value={animalType}
         onChange={(e) => setAnimalType(e.target.value)}
-        className="border p-2 rounded-md"
       >
         <option value="dog">Cachorro</option>
         <option value="cat">Gato</option>
       </select>
-      <input type="file" accept="image/*" onChange={handleImageChange} />
-      <button
-        onClick={handleSubmit}
-        className="bg-purple-600 text-white px-4 py-2 rounded-md font-medium"
-      >
-        Adicionar
-      </button>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setImage(e.target.files[0])}
+        className="border border-slate-300 outline-slate-400 px-4 py-2 rounded-md w-full"
+      />
+      <Button onClick={handleSubmit}>Adicionar Post</Button>
     </div>
   );
 }
