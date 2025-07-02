@@ -9,12 +9,14 @@ import os
 
 app = Flask(__name__)
 
-# CORS corrigido - mais específico
+# CORS corrigido - incluindo localhost:5173 (Vite)
 CORS(app, 
      origins=[
-         "http://localhost:3000",
-         "https://adote-i-ftm-pie-3.vercel.app",
-         "https://*.vercel.app"
+         "http://localhost:3000",         # React padrão
+         "http://localhost:5173",         # Vite padrão
+         "http://127.0.0.1:5173",         # Vite alternativo
+         "https://adote-i-ftm-pie-3.vercel.app",  # Produção
+         "https://*.vercel.app"           # Qualquer Vercel
      ],
      allow_headers=[
          "Content-Type", 
@@ -38,25 +40,28 @@ try:
     adotados_collection = db["adotados"]
     users_collection = db["users"]
     
-    # Teste de conexão
     client.admin.command('ping')
     print("✅ MongoDB conectado com sucesso!")
 except Exception as e:
     print(f"❌ Erro na conexão MongoDB: {e}")
 
-# Middleware para CORS manual (backup)
+# CORS manual adicional (backup)
 @app.after_request
 def after_request(response):
     origin = request.headers.get('Origin')
-    if origin in [
+    allowed_origins = [
         'http://localhost:3000',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
         'https://adote-i-ftm-pie-3.vercel.app'
-    ]:
-        response.headers.add('Access-Control-Allow-Origin', origin)
+    ]
     
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,X-Requested-With,Origin')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    if origin in allowed_origins:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,Accept,X-Requested-With,Origin'
+        response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+    
     return response
 
 def token_required(f):
@@ -86,8 +91,8 @@ def home():
     return jsonify({
         "message": "🎉 API AdoteIFTM funcionando!", 
         "status": "online",
-        "version": "1.0.0",
-        "cors": "enabled",
+        "version": "1.1.0",
+        "cors": "enabled for localhost:5173",
         "endpoints": {
             "login": "POST /login",
             "register": "POST /register", 
@@ -97,6 +102,14 @@ def home():
         }
     }), 200
 
+@app.route("/test-cors", methods=["GET", "POST", "OPTIONS"])
+def test_cors():
+    return jsonify({
+        "message": "CORS funcionando!",
+        "origin": request.headers.get('Origin'),
+        "method": request.method
+    }), 200
+
 @app.route("/register", methods=["POST", "OPTIONS"])
 def register():
     if request.method == "OPTIONS":
@@ -104,7 +117,8 @@ def register():
         
     try:
         data = request.get_json()
-        print(f"📝 Registro - dados recebidos: {data}")
+        print(f"📝 Registro - Origin: {request.headers.get('Origin')}")
+        print(f"📝 Registro - dados: {data}")
         
         if not data:
             return jsonify({"error": "Dados JSON inválidos"}), 400
@@ -144,7 +158,8 @@ def login():
         
     try:
         data = request.get_json()
-        print(f"🔐 Login - dados recebidos: {data}")
+        print(f"🔐 Login - Origin: {request.headers.get('Origin')}")
+        print(f"🔐 Login - dados: {data}")
         
         if not data:
             return jsonify({"error": "Dados JSON inválidos"}), 400
@@ -245,4 +260,5 @@ def get_adotados():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"🚀 Iniciando servidor na porta {port}")
+    print(f"🌐 CORS habilitado para localhost:5173")
     app.run(host="0.0.0.0", port=port, debug=False)
