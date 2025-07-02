@@ -5,17 +5,21 @@ import bcrypt
 import base64
 import jwt
 import datetime
+import os
 
 app = Flask(__name__)
-CORS(app)
 
-# Chave secreta para JWT (defina uma forte e secreta!)
-import secrets
-# print(secrets.token_hex(32))
-SECRET_KEY = secrets.token_hex(32)
+# CORS configurado para produção
+CORS(app, origins=[
+    "http://localhost:3000",  # Para desenvolvimento
+    "https://*.vercel.app",   # Para produção no Vercel
+    "https://*.netlify.app"   # Para produção no Netlify
+])
 
-# Configuração do MongoDB
-MONGO_URI = "mongodb+srv://devbrunocarvalho:jO7Uy2UqCwPmrLOl@adoteiftm.4lsu0xb.mongodb.net/?retryWrites=true&w=majority&appName=AdoteIFTM"
+# Configuração usando variáveis de ambiente
+SECRET_KEY = os.environ.get("SECRET_KEY", "sua_chave_jwt_super_secreta")
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://devbrunocarvalho:jO7Uy2UqCwPmrLOl@adoteiftm.4lsu0xb.mongodb.net/?retryWrites=true&w=majority&appName=AdoteIFTM")
+
 client = MongoClient(MONGO_URI)
 db = client["AdoteIFTM"]
 posts_collection = db["posts"]
@@ -43,6 +47,11 @@ def token_required(f):
             return jsonify({'error': 'Token inválido!'}), 401
         return f(current_user, *args, **kwargs)
     return decorated
+
+# Rota de teste
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": "API AdoteIFTM funcionando!", "status": "online"}), 200
 
 # Rota para cadastro de usuário
 @app.route("/register", methods=["POST"])
@@ -107,12 +116,6 @@ def login():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Exemplo de rota protegida
-@app.route("/protected", methods=["GET"])
-@token_required
-def protected(current_user):
-    return jsonify({"message": f"Bem-vindo, {current_user['username']}!"})
-
 # Rota para criar um post (protegida)
 @app.route("/upload", methods=["POST"])
 @token_required
@@ -124,7 +127,7 @@ def upload_post(current_user):
         image = request.files.get("image")
         username = current_user["username"]
 
-        if not title or not description or not animal_type or not image or not username:
+        if not title or not description or not animal_type or not image:
             return jsonify({"error": "Todos os campos são obrigatórios"}), 400
 
         image_base64 = base64.b64encode(image.read()).decode("utf-8")
@@ -170,4 +173,5 @@ def get_adotados():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)

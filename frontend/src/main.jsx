@@ -5,6 +5,7 @@ import "./index.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import TaskPage from "./pages/TaskPage.jsx";
 import PostPage from "./pages/PostPage.jsx";
+import User from "./components/SideBar.jsx";
 import Login from "./components/userdata/Login.jsx";
 
 const router = createBrowserRouter([
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
   {
     path: "/posts",
     element: <App />,
+  },
+  {
+    path: "/user",
+    element: <User />,
   },
 ]);
 
