@@ -40,9 +40,9 @@ export default function Login() {
     try {
       const response = await fetch(`${API_URL}/login`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json"
+          Accept: "application/json",
         },
         body: JSON.stringify({ username, password }),
       });
@@ -50,7 +50,11 @@ export default function Login() {
       if (response.ok) {
         localStorage.setItem(
           "user",
-          JSON.stringify({ username: data.username, isAdmin: data.isAdmin, token: data.token })
+          JSON.stringify({
+            username: data.username,
+            isAdmin: data.isAdmin,
+            token: data.token,
+          })
         );
         navigate("/posts");
       } else {
@@ -78,9 +82,9 @@ export default function Login() {
     try {
       const response = await fetch(`${API_URL}/register`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json"
+          Accept: "application/json",
         },
         body: JSON.stringify({
           username,
@@ -116,12 +120,12 @@ export default function Login() {
         <div className="block md:hidden w-full h-[120px] bg-[#5e17eb33] flex items-center justify-center">
           <div
             className="w-32 h-24 bg-center bg-no-repeat bg-contain"
-            style={{ backgroundImage: "url('assets/logo.png')" }}
+            style={{ backgroundImage: "url('/assets/logo.png')" }} // Adicionar / no início
           ></div>
         </div>
         <div
           id="imagem"
-          className="hidden md:block md:w-[30%] lg:w-[50%] h-full bg-[#5e17eb33] bg-[url('assets/logo.png')] bg-center bg-no-repeat bg-contain"
+          className="hidden md:block md:w-[30%] lg:w-[50%] h-full bg-[#5e17eb33] bg-[url('/assets/logo.png')] bg-center bg-no-repeat bg-contain" // Adicionar / no início
         ></div>
         <div
           id="formulario"

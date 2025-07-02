@@ -9,20 +9,27 @@ import os
 
 app = Flask(__name__)
 
-# CORS mais permissivo
+# CORS corrigido - mais específico
 CORS(app, 
-     origins=["*"],
-     allow_headers=["*"],
-     methods=["*"],
+     origins=[
+         "http://localhost:3000",
+         "https://adote-i-ftm-pie-3.vercel.app",
+         "https://*.vercel.app"
+     ],
+     allow_headers=[
+         "Content-Type", 
+         "Authorization", 
+         "Accept",
+         "X-Requested-With",
+         "Origin"
+     ],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      supports_credentials=True
 )
 
 # Configuração
 SECRET_KEY = os.environ.get("SECRET_KEY", "beef8000bc175089cadf2701a9979ac4")
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://devbrunocarvalho:jO7Uy2UqCwPmrLOl@adoteiftm.4lsu0xb.mongodb.net/?retryWrites=true&w=majority&appName=AdoteIFTM")
-
-print(f"🔐 SECRET_KEY: {SECRET_KEY[:10]}...")
-print(f"🗄️ MONGO_URI configurado: {bool(MONGO_URI)}")
 
 try:
     client = MongoClient(MONGO_URI)
@@ -36,6 +43,21 @@ try:
     print("✅ MongoDB conectado com sucesso!")
 except Exception as e:
     print(f"❌ Erro na conexão MongoDB: {e}")
+
+# Middleware para CORS manual (backup)
+@app.after_request
+def after_request(response):
+    origin = request.headers.get('Origin')
+    if origin in [
+        'http://localhost:3000',
+        'https://adote-i-ftm-pie-3.vercel.app'
+    ]:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+    
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,X-Requested-With,Origin')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 def token_required(f):
     from functools import wraps
@@ -65,6 +87,7 @@ def home():
         "message": "🎉 API AdoteIFTM funcionando!", 
         "status": "online",
         "version": "1.0.0",
+        "cors": "enabled",
         "endpoints": {
             "login": "POST /login",
             "register": "POST /register", 
@@ -74,15 +97,6 @@ def home():
         }
     }), 200
 
-@app.route("/health", methods=["GET"])
-def health():
-    try:
-        # Testa a conexão com MongoDB
-        client.admin.command('ping')
-        return jsonify({"status": "healthy", "database": "connected"}), 200
-    except Exception as e:
-        return jsonify({"status": "unhealthy", "error": str(e)}), 500
-
 @app.route("/register", methods=["POST", "OPTIONS"])
 def register():
     if request.method == "OPTIONS":
@@ -90,7 +104,7 @@ def register():
         
     try:
         data = request.get_json()
-        print(f"📝 Dados recebidos para registro: {data}")
+        print(f"📝 Registro - dados recebidos: {data}")
         
         if not data:
             return jsonify({"error": "Dados JSON inválidos"}), 400
@@ -116,7 +130,7 @@ def register():
         }
         
         result = users_collection.insert_one(user)
-        print(f"✅ Usuário criado: {username} (ID: {result.inserted_id})")
+        print(f"✅ Usuário criado: {username}")
 
         return jsonify({"message": "Usuário cadastrado com sucesso!"}), 201
     except Exception as e:
@@ -130,7 +144,7 @@ def login():
         
     try:
         data = request.get_json()
-        print(f"🔐 Tentativa de login: {data}")
+        print(f"🔐 Login - dados recebidos: {data}")
         
         if not data:
             return jsonify({"error": "Dados JSON inválidos"}), 400
@@ -182,8 +196,6 @@ def upload_post(current_user):
         image = request.files.get("image")
         username = current_user["username"]
 
-        print(f"📤 Upload de post por: {username}")
-
         if not title or not description or not animal_type or not image:
             return jsonify({"error": "Todos os campos são obrigatórios"}), 400
 
@@ -200,8 +212,6 @@ def upload_post(current_user):
         result = posts_collection.insert_one(post)
         post["_id"] = str(result.inserted_id)
 
-        print(f"✅ Post criado: {title} por {username}")
-
         return jsonify({"message": "Post criado com sucesso!", "post": post}), 201
     except Exception as e:
         print(f"❌ Erro no upload: {e}")
@@ -217,7 +227,6 @@ def get_posts():
             if user:
                 post["phoneNumber"] = user.get("phoneNumber", None)
         
-        print(f"📋 Retornando {len(posts)} posts")
         return jsonify(posts), 200
     except Exception as e:
         print(f"❌ Erro ao buscar posts: {e}")
