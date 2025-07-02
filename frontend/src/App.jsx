@@ -3,9 +3,7 @@ import Tasks from "./components/Tasks";
 import NavBar from "./components/defaults/NavBar";
 import HotBar from "./components/defaults/HotBar";
 import { useNavigate } from "react-router-dom";
-
-// Configuração da URL da API
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import { API_URL } from "./config/api";
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -23,7 +21,18 @@ function App() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await fetch(`${API_URL}/posts`);
+        console.log("Buscando posts em:", `${API_URL}/posts`); // Debug
+        const response = await fetch(`${API_URL}/posts`, {
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         setTasks(data);
       } catch (error) {

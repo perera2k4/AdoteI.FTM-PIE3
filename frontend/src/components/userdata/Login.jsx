@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-// Configuração da URL da API
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import { API_URL } from "../../config/api";
 
 function Popup({ message, onClose }) {
   setTimeout(onClose, 7000);
@@ -38,10 +36,14 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    console.log("Tentando login em:", `${API_URL}/login`); // Debug
     try {
       const response = await fetch(`${API_URL}/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({ username, password }),
       });
       const data = await response.json();
@@ -55,7 +57,8 @@ export default function Login() {
         showPopup(data.error || "Erro ao fazer login");
       }
     } catch (error) {
-      showPopup("Erro ao conectar ao servidor");
+      console.error("Erro de conexão:", error);
+      showPopup("Erro ao conectar ao servidor. Verifique sua conexão.");
     }
     setLoading(false);
   };
@@ -75,7 +78,10 @@ export default function Login() {
     try {
       const response = await fetch(`${API_URL}/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({
           username,
           password,
@@ -94,7 +100,8 @@ export default function Login() {
         showPopup(data.error || "Erro ao realizar cadastro.");
       }
     } catch (error) {
-      showPopup("Erro ao realizar cadastro.");
+      console.error("Erro de conexão:", error);
+      showPopup("Erro ao realizar cadastro. Verifique sua conexão.");
     }
     setLoading(false);
   };
@@ -191,7 +198,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#9533EC] hover:bg-[#7e2bc7] text-white rounded-md py-2 mt-2 transition-colors"
+              className="w-full bg-[#9533EC] hover:bg-[#7e2bc7] text-white rounded-md py-2 mt-2 transition-colors disabled:opacity-50"
             >
               {loading
                 ? "Aguarde..."

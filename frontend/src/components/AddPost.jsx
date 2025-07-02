@@ -1,9 +1,7 @@
 import { useState } from "react";
 import Input from "./Input";
 import Button from "./Button";
-
-// Configuração da URL da API
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import { API_URL } from "../config/api";
 
 function AddPost({ onAddPostSubmit }) {
   const [title, setTitle] = useState("");
@@ -20,6 +18,10 @@ function AddPost({ onAddPostSubmit }) {
       return alert("Preencha todos os campos.");
     }
 
+    if (!token) {
+      return alert("Você precisa estar logado para criar um post.");
+    }
+
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
@@ -28,6 +30,7 @@ function AddPost({ onAddPostSubmit }) {
     formData.append("username", username);
 
     try {
+      console.log("Enviando post para:", `${API_URL}/upload`); // Debug
       const response = await fetch(`${API_URL}/upload`, {
         method: "POST",
         body: formData,
@@ -49,7 +52,7 @@ function AddPost({ onAddPostSubmit }) {
       }
     } catch (error) {
       console.error("Erro ao enviar o post:", error);
-      alert("Erro ao enviar o post.");
+      alert("Erro ao enviar o post. Verifique sua conexão.");
     }
   };
 

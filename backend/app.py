@@ -9,12 +9,12 @@ import os
 
 app = Flask(__name__)
 
-# CORS configurado para produção
-CORS(app, origins=[
-    "http://localhost:3000",  # Para desenvolvimento
-    "https://*.vercel.app",   # Para produção no Vercel
-    "https://*.netlify.app"   # Para produção no Netlify
-])
+# CORS mais permissivo para produção
+CORS(app, 
+     origins=["*"],  # Permite todas as origens (só para teste)
+     allow_headers=["Content-Type", "Authorization", "Accept"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
 
 # Configuração usando variáveis de ambiente
 SECRET_KEY = os.environ.get("SECRET_KEY", "beef8000bc175089cadf2701a9979ac4")
@@ -44,6 +44,7 @@ def token_required(f):
             if not current_user:
                 return jsonify({'error': 'Usuário não encontrado!'}), 401
         except Exception as e:
+            print(f"Erro na validação do token: {e}")  # Debug
             return jsonify({'error': 'Token inválido!'}), 401
         return f(current_user, *args, **kwargs)
     return decorated
@@ -51,16 +52,24 @@ def token_required(f):
 # Rota de teste
 @app.route("/", methods=["GET"])
 def home():
-    return jsonify({"message": "API AdoteIFTM funcionando!", "status": "online"}), 200
+    return jsonify({
+        "message": "API AdoteIFTM funcionando!", 
+        "status": "online",
+        "endpoints": ["/login", "/register", "/posts", "/upload", "/adotados"]
+    }), 200
 
 # Rota para cadastro de usuário
 @app.route("/register", methods=["POST"])
 def register():
     try:
-        username = request.json.get("username")
-        password = request.json.get("password")
-        phone_number = request.json.get("phoneNumber")
-        is_admin = request.json.get("isAdmin", False)
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Dados JSON inválidos"}), 400
+            
+        username = data.get("username")
+        password = data.get("password")
+        phone_number = data.get("phoneNumber")
+        is_admin = data.get("isAdmin", False)
 
         if not username or not password or not phone_number:
             return jsonify({"error": "Todos os campos são obrigatórios"}), 400
@@ -80,14 +89,21 @@ def register():
 
         return jsonify({"message": "Usuário cadastrado com sucesso!"}), 201
     except Exception as e:
+        print(f"Erro no registro: {e}")  # Debug
         return jsonify({"error": str(e)}), 500
 
 # Rota para login de usuário (gera token JWT)
 @app.route("/login", methods=["POST"])
 def login():
     try:
-        username = request.json.get("username")
-        password = request.json.get("password")
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Dados JSON inválidos"}), 400
+            
+        username = data.get("username")
+        password = data.get("password")
+
+        print(f"Tentativa de login: {username}")  # Debug
 
         if not username or not password:
             return jsonify({"error": "Todos os campos são obrigatórios"}), 400
@@ -107,6 +123,8 @@ def login():
             "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=2)
         }, SECRET_KEY, algorithm="HS256")
 
+        print(f"Login bem-sucedido: {username}")  # Debug
+
         return jsonify({
             "message": "Login realizado com sucesso!",
             "username": user["username"],
@@ -114,6 +132,7 @@ def login():
             "token": token
         }), 200
     except Exception as e:
+        print(f"Erro no login: {e}")  # Debug
         return jsonify({"error": str(e)}), 500
 
 # Rota para criar um post (protegida)
@@ -145,6 +164,7 @@ def upload_post(current_user):
 
         return jsonify({"message": "Post criado com sucesso!", "post": post}), 201
     except Exception as e:
+        print(f"Erro no upload: {e}")  # Debug
         return jsonify({"error": str(e)}), 500
 
 # Rota para listar todos os posts (pública)
@@ -159,6 +179,7 @@ def get_posts():
                 post["phoneNumber"] = user.get("phoneNumber", None)
         return jsonify(posts), 200
     except Exception as e:
+        print(f"Erro ao buscar posts: {e}")  # Debug
         return jsonify({"error": str(e)}), 500
 
 # Rota para listar todos os posts adotados (pública)
@@ -174,4 +195,5 @@ def get_adotados():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+    print(f"Iniciando servidor na porta {port}")  # Debug
     app.run(host="0.0.0.0", port=port, debug=False)
