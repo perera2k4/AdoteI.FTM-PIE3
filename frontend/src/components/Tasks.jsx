@@ -1,115 +1,130 @@
-import { Phone, MapPin, Calendar, User } from "lucide-react";
+import { useState } from "react";
+import { Dog, Cat, User, MessagesSquare } from "lucide-react";
 
-export default function Tasks({ tasks, onRefresh }) {
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+function Tasks({ tasks }) {
+  const [selectedTask, setSelectedTask] = useState(null); // Estado para o item clicado
+
+  const handleItemClick = (task) => {
+    setSelectedTask(task); // Atualizar o estado com o item clicado
   };
 
-  const getCategoryColor = (category) => {
-    switch (category) {
-      case 'cachorros':
-        return 'bg-blue-100 text-blue-800';
-      case 'gatos':
-        return 'bg-orange-100 text-orange-800';
-      case 'outros':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-purple-100 text-purple-800';
+  const closePopup = () => {
+    setSelectedTask(null); // Fechar o popup
+  };
+
+  const gerarLinkWhatsApp = (numeroUsuario, nomeUsuario, nomeAnimal) => {
+    if (!numeroUsuario) {
+      console.error("Número de telefone não fornecido para o usuário.");
+      return "#"; // Retorna um link vazio se o número não estiver disponível
     }
+
+    const texto = `Olá, *${nomeUsuario}* tenho interesse na adoção do *${nomeAnimal}*`;
+    return `https://api.whatsapp.com/send/?phone=${numeroUsuario}&text=${encodeURIComponent(
+      texto
+    )}&type=phone_number&app_absent=0`;
   };
 
-  if (tasks.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-gray-400 mb-4">
-          <User size={64} className="mx-auto" />
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          Nenhum animal disponível para adoção
-        </h3>
-        <p className="text-gray-500">
-          Seja o primeiro a publicar um animal para adoção!
-        </p>
-      </div>
-    );
-  }
+  const abrirWhatsApp = (numeroUsuario, nomeUsuario, nomeAnimal) => {
+    const url = gerarLinkWhatsApp(numeroUsuario, nomeUsuario, nomeAnimal);
+    window.open(url, "_blank"); // Abre o link em uma nova aba
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
-          Animais para Adoção
-        </h2>
-        <p className="text-gray-600">
-          {tasks.length} {tasks.length === 1 ? 'animal disponível' : 'animais disponíveis'}
-        </p>
-      </div>
-
-      <div className="grid gap-6">
-        {tasks.map((task) => (
-          <div
-            key={task.id}
-            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-          >
-            {task.image && (
-              <div className="h-64 overflow-hidden">
-                <img
-                  src={task.image}
-                  alt={task.title}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            )}
-            
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="text-xl font-semibold text-gray-800">
-                  {task.title}
-                </h3>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(task.category)}`}>
-                  {task.category}
-                </span>
-              </div>
-              
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                {task.description}
-              </p>
-              
-              <div className="space-y-2 text-sm text-gray-500">
-                {task.contact && (
-                  <div className="flex items-center gap-2">
-                    <Phone size={16} />
-                    <span>{task.contact}</span>
-                  </div>
-                )}
-                
-                {task.location && (
-                  <div className="flex items-center gap-2">
-                    <MapPin size={16} />
-                    <span>{task.location}</span>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-2">
-                  <Calendar size={16} />
-                  <span>Publicado em {formatDate(task.createdAt)}</span>
+    <div>
+      <ul className="mt-24 space-y-8 p-3 rounded-md">
+        {Array.isArray(tasks) && tasks.length > 0 ? (
+          tasks.map((task) => (
+            <li
+              key={task.title}
+              className="relative flex flex-col rounded-md p-3 gap-2 bg-purple-400 hover:scale-105 transition-transform duration-300 cursor-pointer"
+              onClick={() => handleItemClick(task)}
+            >
+              <div className="absolute inset-0 top-[-10px] gap-2 flex justify-center text-sm text-gray-600 ">
+                <div className="flex justify-center items-center text-white gap-2 bg-purple-600 h-6 w-auto p-4 rounded-xl">
+                  <User className="bg-slate-400 p-1 rounded-xl" />
+                  <span className="font-medium text-sm sm:text-base">
+                    {task.username || "Usuário"}
+                  </span>
                 </div>
-                
-                {task.username && (
-                  <div className="flex items-center gap-2">
-                    <User size={16} />
-                    <span>Por {task.username}</span>
+              </div>
+              <div className="flex items-center gap-2 justify-between">
+                <div className="flex gap-2 items-center">
+                  {task.animalType === "dog" ? (
+                    <Dog className="w-6 h-6 text-blue-500" />
+                  ) : (
+                    <Cat className="w-6 h-6 text-orange-500" />
+                  )}
+                  <h3 className="text-lg font-bold">{task.title}</h3>
+                </div>
+              </div>
+              <p>{task.description}</p>
+              {task.image && (
+                <img
+                  src={`data:image/jpeg;base64,${task.image}`}
+                  alt={task.title}
+                  className="w-full h-auto rounded-md shadow-2xl"
+                />
+              )}
+            </li>
+          ))
+        ) : (
+          <p className="text-center text-gray-500">Nenhum post encontrado.</p>
+        )}
+      </ul>
+
+      {/* Popup */}
+      {selectedTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-4 rounded-lg shadow-lg w-[90%] max-w-md">
+            <div className="flex justify-between items-start">
+              <div>
+                <div>
+                  <div className="flex gap-2 items-center">
+                    {selectedTask.animalType === "dog" ? (
+                      <Dog className="w-6 h-6 text-blue-500" />
+                    ) : (
+                      <Cat className="w-6 h-6 text-orange-500" />
+                    )}
+                    <h3 className="text-lg font-bold">{selectedTask.title}</h3>
                   </div>
-                )}
+                </div>
+                <p className="mb-1">{selectedTask.description}</p>
+                <button
+                  onClick={() =>
+                    abrirWhatsApp(
+                      selectedTask.phoneNumber,
+                      selectedTask.username,
+                      selectedTask.title
+                    )
+                  }
+                  className="flex gap-2 my-2 underline text-blue-500"
+                >
+                  <MessagesSquare /> Fale com: {selectedTask.username}
+                </button>
+              </div>
+
+              <div>
+                <button
+                  onClick={closePopup}
+                  className="mt-4 bg-red-500 text-white px-4 py-2 rounded-md"
+                >
+                  Fechar
+                </button>
               </div>
             </div>
+
+            {selectedTask.image && (
+              <img
+                src={`data:image/jpeg;base64,${selectedTask.image}`}
+                alt={selectedTask.title}
+                className="w-full h-auto rounded-md shadow"
+              />
+            )}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
+
+export default Tasks;
