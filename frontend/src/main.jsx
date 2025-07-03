@@ -3,21 +3,19 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App.jsx'
 import Login from './components/userdata/Login.jsx'
-import Profile from './components/Profile.jsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter
       future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true
+        v7_startTransition: true, // Remove o warning
+        v7_relativeSplatPath: true // Remove outros warnings futuros
       }}
     >
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/posts" element={<App />} />
-        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
