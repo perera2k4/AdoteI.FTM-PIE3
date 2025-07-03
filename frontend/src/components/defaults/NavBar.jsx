@@ -1,36 +1,65 @@
 import { useState, useEffect } from "react";
-import { User } from "lucide-react";
+import { Bell, User } from "lucide-react";
+import authService from "../../utils/auth";
 
 export default function Navbar() {
-  const [username, setUsername] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    // Buscar o nome do usuário do localStorage
-    const storedUsername = localStorage.getItem("username");
-    if (storedUsername) {
-      setUsername(storedUsername);
-    }
+    // Obtém usuário da sessão
+    const user = authService.getCurrentUser();
+    setCurrentUser(user);
+
+    // Escuta mudanças na autenticação
+    const checkUser = () => {
+      const user = authService.getCurrentUser();
+      setCurrentUser(user);
+    };
+
+    const interval = setInterval(checkUser, 1000);
+    return () => clearInterval(interval);
   }, []);
 
+  const handleLogout = () => {
+    if (confirm('Tem certeza que deseja sair?')) {
+      authService.logout();
+    }
+  };
+
   return (
-    <nav className="w-full bg-slate-100 shadow-md px-4 py-3">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center">
+    <nav className="w-full bg-white shadow-md p-4 flex justify-between items-center fixed top-0 z-50">
+      <div className="flex items-center gap-4">
+        <div className="bg-[#5e17eb33] rounded-full p-2">
           <img
-            src="assets/logo.png"
+            src="/assets/logo.png"
             alt="Logo"
-            className="h-14 w-auto sm:h-16"
+            className="w-8 h-8 object-contain"
           />
         </div>
+        <h1 className="text-xl font-bold text-purple-700">AdoteI.FTM</h1>
+      </div>
 
-        {/* Nome do usuário */}
-        <div className="text-white flex gap-2 text-right bg-purple-600 p-2 rounded-xl items-center">
-          <User className="bg-slate-400 p-1 rounded-xl" />
-          <span className="font-medium text-sm sm:text-base">
-            {username || "Usuário"}
+      <div className="flex items-center gap-4">
+        <Bell className="w-6 h-6 text-purple-700 cursor-pointer hover:text-purple-900" />
+        
+        <div className="flex items-center gap-2">
+          <User className="bg-slate-400 p-1 rounded-xl text-white" />
+          <span className="font-medium text-purple-700">
+            {currentUser?.username || 'Carregando...'}
           </span>
+          {currentUser?.isAdmin && (
+            <span className="bg-yellow-400 text-yellow-800 px-2 py-1 rounded-full text-xs font-bold">
+              ADMIN
+            </span>
+          )}
         </div>
+
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors text-sm"
+        >
+          Sair
+        </button>
       </div>
     </nav>
   );

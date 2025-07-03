@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_URL } from "../../config/api";
+import authService from "../../utils/auth";
 
-function Popup({ message, onClose }) {
+function Popup({ message, onClose, type = "error" }) {
   setTimeout(onClose, 7000);
+  const bgColor = type === "success" ? "bg-green-400" : "bg-red-400";
+  
   return (
-    <div className="fixed bottom-6 right-6 z-50 bg-red-400 text-white px-6 py-3 rounded shadow-lg animate-fade-in">
+    <div className={`fixed bottom-6 right-6 z-50 ${bgColor} text-white px-6 py-3 rounded shadow-lg animate-fade-in`}>
       {message}
     </div>
   );
@@ -29,90 +31,73 @@ export default function Login() {
     return `+55${digits}`;
   }
 
-  function showPopup(msg) {
-    setPopup(msg);
+  function showPopup(msg, type = "error") {
+    setPopup({ message: msg, type });
   }
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    console.log("Tentando login em:", `${API_URL}/login`); // Debug
+    
+    console.log('🔐 Tentando login com sessão...');
+    
     try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            username: data.username,
-            isAdmin: data.isAdmin,
-            token: data.token,
-          })
-        );
-        navigate("/posts");
+      const result = await authService.login(username, password);
+      
+      if (result.success) {
+        showPopup("Login realizado com sucesso!", "success");
+        setTimeout(() => {
+          navigate("/posts");
+        }, 1000);
       } else {
-        showPopup(data.error || "Erro ao fazer login");
+        showPopup(result.error || "Erro ao fazer login");
       }
     } catch (error) {
-      console.error("Erro de conexão:", error);
-      showPopup("Erro ao conectar ao servidor. Verifique sua conexão.");
+      console.error("Erro no login:", error);
+      showPopup("Erro ao conectar ao servidor");
     }
+    
     setLoading(false);
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    
     if (!username.trim() || !password.trim() || !phoneNumber.trim()) {
       return showPopup("Preencha todos os campos.");
     }
+    
     const formattedPhone = formatPhoneNumber(phoneNumber);
     if (!formattedPhone) {
-      return showPopup(
-        "Digite um número válido no formato 88999999999 ou +5588999999999"
-      );
+      return showPopup("Digite um número válido no formato 88999999999");
     }
+    
     setLoading(true);
+    
     try {
-      const response = await fetch(`${API_URL}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-          phoneNumber: formattedPhone,
-          isAdmin: false,
-        }),
-      });
-      const data = await response.json();
-      if (response.ok) {
+      const result = await authService.register(username, password, formattedPhone);
+      
+      if (result.success) {
         setScreen("login");
         setUsername("");
         setPassword("");
         setPhoneNumber("");
-        showPopup("Usuário cadastrado com sucesso!");
+        showPopup("Usuário cadastrado com sucesso!", "success");
       } else {
-        showPopup(data.error || "Erro ao realizar cadastro.");
+        showPopup(result.error || "Erro ao realizar cadastro");
       }
     } catch (error) {
-      console.error("Erro de conexão:", error);
-      showPopup("Erro ao realizar cadastro. Verifique sua conexão.");
+      console.error("Erro no registro:", error);
+      showPopup("Erro ao conectar ao servidor");
     }
+    
     setLoading(false);
   };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#7e2bc7] via-[#8c30dd82] to-[#9d36f776]">
-      {popup && <Popup message={popup} onClose={() => setPopup(null)} />}
+      {popup && <Popup message={popup.message} type={popup.type} onClose={() => setPopup(null)} />}
+      
       <section
         id="login"
         className="relative bg-white w-[300px] md:w-[80vw] lg:w-[950px] h-[515px] md:h-[400px] rounded-2xl shadow-lg flex flex-col md:flex-row overflow-hidden"
@@ -120,25 +105,26 @@ export default function Login() {
         <div className="block md:hidden w-full h-[120px] bg-[#5e17eb33] flex items-center justify-center">
           <div
             className="w-32 h-24 bg-center bg-no-repeat bg-contain"
-            style={{ backgroundImage: "url('/assets/logo.png')" }} // Adicionar / no início
+            style={{ backgroundImage: "url('/assets/logo.png')" }}
           ></div>
         </div>
+        
         <div
           id="imagem"
-          className="hidden md:block md:w-[30%] lg:w-[50%] h-full bg-[#5e17eb33] bg-[url('/assets/logo.png')] bg-center bg-no-repeat bg-contain" // Adicionar / no início
+          className="hidden md:block md:w-[30%] lg:w-[50%] h-full bg-[#5e17eb33] bg-[url('/assets/logo.png')] bg-center bg-no-repeat bg-contain"
         ></div>
-        <div
-          id="formulario"
-          className="flex-1 flex flex-col justify-center px-6 py-8"
-        >
+        
+        <div id="formulario" className="flex-1 flex flex-col justify-center px-6 py-8">
           <h1 className="text-2xl font-bold text-center mb-2">
             {screen === "login" ? "Login" : "Cadastro"}
           </h1>
+          
           <p className="text-center text-gray-700 mb-6">
             {screen === "login"
               ? "Seja bem-vindo(a). Faça login para acessar sua conta."
               : "Preencha os campos para criar sua conta."}
           </p>
+          
           <form
             onSubmit={screen === "login" ? handleLogin : handleRegister}
             className="space-y-4"
@@ -161,6 +147,7 @@ export default function Login() {
                 required
               />
             </div>
+            
             <div className="flex items-center bg-[#9633ec26] rounded-md px-2">
               <span className="material-symbols-outlined text-[#9533EC] text-2xl mr-2">
                 vpn_key
@@ -170,9 +157,7 @@ export default function Login() {
                 name="senha"
                 id="isenha"
                 placeholder="Senha"
-                autoComplete={
-                  screen === "login" ? "current-password" : "new-password"
-                }
+                autoComplete={screen === "login" ? "current-password" : "new-password"}
                 minLength={8}
                 maxLength={20}
                 className="bg-transparent flex-1 outline-none py-2"
@@ -181,6 +166,7 @@ export default function Login() {
                 required
               />
             </div>
+            
             {screen === "register" && (
               <div className="flex items-center bg-[#9633ec26] rounded-md px-2">
                 <span className="material-symbols-outlined text-[#9533EC] text-2xl mr-2">
@@ -199,6 +185,7 @@ export default function Login() {
                 />
               </div>
             )}
+            
             <button
               type="submit"
               disabled={loading}
@@ -211,6 +198,7 @@ export default function Login() {
                 : "Cadastrar"}
             </button>
           </form>
+          
           {screen === "login" ? (
             <button
               onClick={() => setScreen("register")}
@@ -231,6 +219,7 @@ export default function Login() {
           )}
         </div>
       </section>
+      
       <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
         rel="stylesheet"
