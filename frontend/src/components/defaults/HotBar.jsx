@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PawPrint, Plus, User } from "lucide-react";
+import { Heart, Plus, User } from "lucide-react";
 import AddPost from "../AddPost"; // Importar o componente AddPost
 
 export default function HotBar({ onAddPostSubmit }) {
@@ -7,7 +7,7 @@ export default function HotBar({ onAddPostSubmit }) {
   const [showModal, setShowModal] = useState(false); // Estado para controlar o modal
 
   const buttons = [
-    { id: "home", icon: <PawPrint className="w-6 h-6" /> },
+    { id: "home", icon: <Heart className="w-6 h-6" /> },
     { id: "post", icon: <Plus className="w-6 h-6" /> },
     { id: "user", icon: <User className="w-6 h-6" /> },
   ];
