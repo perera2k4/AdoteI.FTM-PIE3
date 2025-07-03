@@ -1,10 +1,35 @@
+// filepath: frontend/src/config/api.js
+// Configuração da API baseada no ambiente
+export const API_URL = import.meta.env.PROD 
+  ? 'https://your-vercel-app.vercel.app/api'  // Substitua pela sua URL do Vercel
+  : 'http://localhost:3000';
+
+// Configuração adicional para produção
+export const API_CONFIG = {
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  },
+  timeout: 10000 // 10 segundos
+};
+
+console.log('🌐 API URL:', API_URL);
+console.log('🏗️ Ambiente:', import.meta.env.MODE);
+
+
+/* 
 // Sempre usa o backend do Render (mesmo em desenvolvimento)
 export const API_URL = 'https://adote-iftm-backend.onrender.com';
 
 console.log('🌐 Ambiente:', window.location.hostname);
 console.log('🔗 API_URL configurada:', API_URL);
 
-/* VERSAO ESTÁVEL
+
+
+
+VERSAO ESTÁVEL -----------------
+
+
 // Detecta automaticamente o ambiente
 const getApiUrl = () => {
   // Se estiver em produção (Vercel), usa a URL do backend
