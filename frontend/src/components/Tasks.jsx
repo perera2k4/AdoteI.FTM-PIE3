@@ -31,7 +31,7 @@ function Tasks({ tasks }) {
 
   return (
     <div>
-      <ul className="space-y-8 p-3 rounded-md">
+      <ul className="mt-24 space-y-8 p-3 rounded-md">
         {Array.isArray(tasks) && tasks.length > 0 ? (
           tasks.map((task) => (
             <li

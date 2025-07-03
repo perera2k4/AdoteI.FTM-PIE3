@@ -1,4 +1,27 @@
-import { StrictMode } from "react";
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import App from './App.jsx'
+import Login from './components/userdata/Login.jsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true, // Remove o warning
+        v7_relativeSplatPath: true // Remove outros warnings futuros
+      }}
+    >
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/posts" element={<App />} />
+      </Routes>
+    </BrowserRouter>
+  </React.StrictMode>,
+)
+
+/* import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
@@ -36,3 +59,4 @@ createRoot(document.getElementById("root")).render(
     <RouterProvider router={router} />
   </StrictMode>
 );
+*/

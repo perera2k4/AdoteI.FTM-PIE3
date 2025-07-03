@@ -17,10 +17,13 @@ function App() {
     const initializeApp = async () => {
       // Verifica se está autenticado
       if (!authService.isAuthenticated()) {
+        console.log('❌ Não autenticado, redirecionando...');
         navigate("/");
         return;
       }
 
+      console.log('✅ Usuário autenticado:', authService.getCurrentUser()?.username);
+      
       // Busca os posts
       await fetchPosts();
       setLoading(false);
@@ -48,7 +51,9 @@ function App() {
       setTasks(data);
       console.log(`✅ ${data.length} posts carregados`);
     } catch (error) {
-      console.error("Erro ao buscar os posts:", error);
+      console.error("❌ Erro ao buscar os posts:", error);
+      // Define array vazio em caso de erro
+      setTasks([]);
     }
   };
 
@@ -60,21 +65,21 @@ function App() {
   // Loading screen
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
-          <p className="mt-4 text-purple-700">Carregando...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-purple-600 to-purple-800">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto"></div>
+          <p className="mt-4 text-lg">Carregando posts...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       <NavBar />
       <SessionInfo />
-      <div className="w-full h-full p-2 flex justify-center mb-20">
-        <div className="w-[70vh] space-y-4">
+      <div className="pt-20 pb-24 px-4">
+        <div className="max-w-2xl mx-auto">
           <Tasks tasks={tasks} />
         </div>
       </div>

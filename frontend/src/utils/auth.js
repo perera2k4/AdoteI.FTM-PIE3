@@ -4,33 +4,37 @@ class AuthService {
   constructor() {
     this.sessionId = null;
     this.user = null;
-    this.activityTimer = null;
     this.sessionCheckInterval = null;
-    this.inactivityTimeout = 10 * 60 * 1000; // 10 minutos em ms
-    this.sessionCheckInterval = 30 * 1000; // Verifica sessão a cada 30s
+    this.isActive = false; // Controle para evitar requisições desnecessárias
     
     this.setupActivityTracking();
-    this.startSessionCheck();
   }
 
-  // Configurar rastreamento de atividade
+  // Configurar rastreamento de atividade - SEM SPAM
   setupActivityTracking() {
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    let activityTimeout;
+    const ACTIVITY_DEBOUNCE = 5000; // 5 segundos entre atualizações
     
-    const resetTimer = () => {
-      if (this.sessionId) {
+    const events = ['mousedown', 'keypress', 'click'];
+    
+    const handleActivity = () => {
+      if (!this.sessionId || !this.isActive) return;
+      
+      // Debounce - evita spam de requisições
+      clearTimeout(activityTimeout);
+      activityTimeout = setTimeout(() => {
         this.updateActivity();
-      }
+      }, ACTIVITY_DEBOUNCE);
     };
 
     events.forEach(event => {
-      document.addEventListener(event, resetTimer, true);
+      document.addEventListener(event, handleActivity, { passive: true });
     });
   }
 
-  // Atualizar atividade (renova a sessão)
+  // Atualizar atividade (SEM SPAM)
   async updateActivity() {
-    if (!this.sessionId) return;
+    if (!this.sessionId || !this.isActive) return;
 
     try {
       const response = await fetch(`${API_URL}/session-info`, {
@@ -42,51 +46,70 @@ class AuthService {
       });
 
       if (!response.ok) {
+        console.log('❌ Sessão inválida durante atividade');
         this.logout();
       }
     } catch (error) {
-      console.log('Erro ao atualizar atividade:', error);
+      console.log('⚠️ Erro na atualização de atividade (ignorado):', error.message);
+      // NÃO faz logout em erro de rede para evitar logout desnecessário
     }
   }
 
-  // Verificar sessão periodicamente
+  // Verificar sessão periodicamente - CONTROLADO
   startSessionCheck() {
-    this.sessionCheckInterval = setInterval(async () => {
-      if (this.sessionId) {
-        try {
-          const response = await fetch(`${API_URL}/session-info`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Session ${this.sessionId}`,
-              'Content-Type': 'application/json'
-            }
-          });
+    if (this.sessionCheckInterval) {
+      clearInterval(this.sessionCheckInterval);
+    }
 
-          if (response.ok) {
-            const data = await response.json();
-            this.user = data.user;
-            
-            // Se restam menos de 2 minutos, avisa o usuário
-            if (data.session.time_remaining < 120) {
-              this.showSessionWarning(data.session.time_remaining);
-            }
-          } else {
-            this.logout();
+    this.sessionCheckInterval = setInterval(async () => {
+      if (!this.sessionId || !this.isActive) return;
+
+      try {
+        const response = await fetch(`${API_URL}/session-info`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Session ${this.sessionId}`,
+            'Content-Type': 'application/json'
           }
-        } catch (error) {
-          console.log('Erro na verificação de sessão:', error);
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          this.user = data.user;
+          
+          // Aviso apenas quando restam menos de 2 minutos
+          if (data.session.time_remaining < 120 && data.session.time_remaining > 60) {
+            this.showSessionWarning(data.session.time_remaining);
+          }
+        } else {
+          console.log('🔓 Sessão expirada, fazendo logout');
+          this.logout();
         }
+      } catch (error) {
+        console.log('⚠️ Erro na verificação de sessão:', error.message);
+        // Em ambiente local com problemas de CORS, não faz logout automático
+        if (window.location.hostname === 'localhost' && error.message.includes('Failed to fetch')) {
+          console.log('🏠 Ambiente local - erro de rede ignorado');
+          return;
+        }
+        this.logout();
       }
-    }, this.sessionCheckInterval);
+    }, 60000); // Verifica a cada 1 minuto (não 30s)
+  }
+
+  // Para a verificação de sessão
+  stopSessionCheck() {
+    if (this.sessionCheckInterval) {
+      clearInterval(this.sessionCheckInterval);
+      this.sessionCheckInterval = null;
+    }
   }
 
   // Aviso de sessão prestes a expirar
   showSessionWarning(timeRemaining) {
     const minutes = Math.floor(timeRemaining / 60);
-    const seconds = timeRemaining % 60;
     
-    if (timeRemaining <= 60) {
-      alert(`Sua sessão expirará em ${seconds} segundos. Clique em OK para renovar.`);
+    if (confirm(`Sua sessão expirará em ${minutes} minuto(s). Deseja renovar?`)) {
       this.updateActivity(); // Renova a sessão
     }
   }
@@ -94,6 +117,8 @@ class AuthService {
   // Login
   async login(username, password) {
     try {
+      console.log('🔐 Fazendo login...');
+      
       const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
@@ -105,22 +130,47 @@ class AuthService {
       const data = await response.json();
 
       if (response.ok) {
-        this.sessionId = data.session_id;
-        this.user = data.user;
+        // Verifica formato da resposta
+        if (data.session_id && data.user) {
+          // Formato novo (com sessão)
+          this.sessionId = data.session_id;
+          this.user = data.user;
+          this.isActive = true;
+          this.startSessionCheck();
+          console.log('✅ Login com sessão realizado:', this.user.username);
+        } else if (data.token && (data.username || data.user)) {
+          // Formato antigo (compatibilidade)
+          this.sessionId = data.token;
+          this.user = {
+            username: data.username || data.user.username,
+            isAdmin: data.isAdmin || data.user?.isAdmin || false,
+            phoneNumber: data.user?.phoneNumber
+          };
+          this.isActive = true;
+          // NÃO inicia verificação para formato antigo (evita CORS)
+          console.log('✅ Login compatível realizado:', this.user.username);
+        } else {
+          console.error('❌ Formato de resposta inválido:', data);
+          return { success: false, error: 'Formato de resposta inválido' };
+        }
         
-        console.log('✅ Login realizado:', this.user.username);
         return { success: true, user: this.user };
       } else {
         return { success: false, error: data.error };
       }
     } catch (error) {
-      console.error('Erro no login:', error);
+      console.error('❌ Erro no login:', error);
       return { success: false, error: 'Erro de conexão' };
     }
   }
 
   // Logout
   async logout() {
+    console.log('🔓 Iniciando logout...');
+    
+    this.isActive = false; // Para todas as verificações
+    this.stopSessionCheck();
+
     try {
       if (this.sessionId) {
         await fetch(`${API_URL}/logout`, {
@@ -132,18 +182,15 @@ class AuthService {
         });
       }
     } catch (error) {
-      console.log('Erro no logout:', error);
+      console.log('⚠️ Erro no logout (ignorado):', error.message);
     }
 
     // Limpa dados locais
     this.sessionId = null;
     this.user = null;
 
-    // Para os timers
-    if (this.sessionCheckInterval) {
-      clearInterval(this.sessionCheckInterval);
-    }
-
+    console.log('🔐 Logout realizado');
+    
     // Redireciona para login
     window.location.href = '/';
   }
@@ -200,9 +247,15 @@ class AuthService {
 
     const headers = {
       'Authorization': `Session ${this.sessionId}`,
-      'Content-Type': 'application/json',
       ...options.headers
     };
+
+    // Remove Content-Type se for FormData
+    if (options.body instanceof FormData) {
+      delete headers['Content-Type'];
+    } else {
+      headers['Content-Type'] = 'application/json';
+    }
 
     const response = await fetch(url, {
       ...options,
@@ -210,6 +263,7 @@ class AuthService {
     });
 
     if (response.status === 401) {
+      console.log('❌ Sessão expirada na requisição');
       this.logout();
       throw new Error('Sessão expirada');
     }
