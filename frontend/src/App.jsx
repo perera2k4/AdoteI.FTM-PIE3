@@ -62,6 +62,11 @@ function App() {
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
 
+  // Atualizar lista de posts (usado quando um post é arquivado)
+  const refreshPosts = () => {
+    fetchPosts();
+  };
+
   // Loading screen
   if (loading) {
     return (
@@ -80,7 +85,7 @@ function App() {
       <SessionInfo />
       <div className="pt-20 pb-24 px-4">
         <div className="max-w-2xl mx-auto">
-          <Tasks tasks={tasks} />
+          <Tasks tasks={tasks} onRefresh={refreshPosts} />
         </div>
       </div>
       <HotBar onAddPostSubmit={onAddPostSubmit} />
