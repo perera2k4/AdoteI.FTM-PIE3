@@ -44,7 +44,7 @@ export default function HotBar({ onAddPostSubmit }) {
     <>
       {/* Modal para criar o post */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-6 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-md">
             <h2 className="text-lg font-bold mb-4">Criar publicação</h2>
             <AddPost
@@ -64,7 +64,7 @@ export default function HotBar({ onAddPostSubmit }) {
       )}
 
       {/* HotBar */}
-      <div className="fixed bottom-0 w-full flex justify-around items-center bg-purple-600 rounded-t-2xl py-3 px-6 z-50">
+      <div className="fixed bottom-0 w-full flex justify-around items-center bg-purple-600 rounded-t-2xl py-2 px-6 z-50">
         {buttons.map(({ id, icon }) => (
           <button
             key={id}

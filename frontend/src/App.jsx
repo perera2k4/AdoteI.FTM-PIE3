@@ -64,9 +64,9 @@ function App() {
     );
   }
 
-  // Componente principal para mostrar posts, nao mecha nessa parte, nao sei como esta funcionando
+  // Componente principal para mostrar posts
   const PostsPage = () => (
-    <div className="max-w-4xl mx-auto px-4">
+    <div className="max-w-6xl mx-auto px-4">
       <Tasks tasks={posts} />
     </div>
   );

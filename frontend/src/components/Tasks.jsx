@@ -46,7 +46,7 @@ function Tasks({ tasks }) {
   return (
     <div>
       {/* Lista de publicações com estilização do Profile */}
-      <div className="mt-2 space-y-6 p-3">
+      <div className="mb-24 space-y-8 p-2">
         {Array.isArray(tasks) && tasks.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {tasks.map((task) => (

@@ -214,7 +214,7 @@ const Profile = () => {
               Você ainda não fez nenhuma publicação de adoção.
             </p>
             <button
-              onClick={() => navigate('/create-post')}
+              onClick={() => navigate('/posts')}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
             >
               Criar primeira publicação
