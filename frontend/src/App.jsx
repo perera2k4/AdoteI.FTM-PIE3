@@ -1,89 +1,133 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Tasks from "./components/Tasks";
-import NavBar from "./components/defaults/NavBar";
-import HotBar from "./components/defaults/HotBar";
-import SessionInfo from "./components/SessionInfo";
-import authService from "./utils/auth";
-import { API_URL } from "./config/api";
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import Navbar from './components/defaults/NavBar';
+import AddPost from './components/AddPost';
+import Tasks from './components/Tasks';
+import SessionInfo from './components/SessionInfo';
+import Profile from './components/Profile';
+import HotBar from './components/defaults/HotBar';
+import authService from './utils/auth';
+import { API_URL } from './config/api';
 
 function App() {
-  const [tasks, setTasks] = useState([]);
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Proteger rota e buscar dados
   useEffect(() => {
-    const initializeApp = async () => {
-      // Verifica se está autenticado
-      if (!authService.isAuthenticated()) {
-        console.log('❌ Não autenticado, redirecionando...');
-        navigate("/");
-        return;
-      }
+    console.log('App: rota atual:', location.pathname);
+    
+    // Verificar se está autenticado
+    if (!authService.isAuthenticated()) {
+      console.log('App: usuário não autenticado, redirecionando...');
+      window.location.href = '/';
+      return;
+    }
 
-      console.log('✅ Usuário autenticado:', authService.getCurrentUser()?.username);
-      
-      // Busca os posts
-      await fetchPosts();
+    // Só carregar posts na página inicial ou posts
+    if (location.pathname === '/' || location.pathname === '/posts') {
+      fetchPosts();
+    } else {
       setLoading(false);
-    };
+    }
+  }, [location.pathname]);
 
-    initializeApp();
-  }, [navigate]);
-
-  // Buscar posts do backend
   const fetchPosts = async () => {
     try {
-      console.log('📋 Buscando posts...');
-      const response = await fetch(`${API_URL}/posts`, {
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json"
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(`${API_URL}/posts`);
+      if (response.ok) {
+        const data = await response.json();
+        setPosts(data);
+      } else {
+        console.error('Erro ao carregar posts');
       }
-      
-      const data = await response.json();
-      setTasks(data);
-      console.log(`✅ ${data.length} posts carregados`);
     } catch (error) {
-      console.error("❌ Erro ao buscar os posts:", error);
-      // Define array vazio em caso de erro
-      setTasks([]);
+      console.error('Erro ao conectar com o servidor:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Adicionar novo post
-  const onAddPostSubmit = (newTask) => {
-    setTasks((prevTasks) => [...prevTasks, newTask]);
+  const handleAddPost = (newPost) => {
+    setPosts([newPost, ...posts]);
   };
 
-  // Loading screen
-  if (loading) {
+  // Página de loading apenas para as rotas principais
+  if (loading && (location.pathname === '/' || location.pathname === '/posts')) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-purple-600 to-purple-800">
-        <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto"></div>
-          <p className="mt-4 text-lg">Carregando posts...</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          <p className="mt-4 text-gray-600">Carregando posts...</p>
         </div>
       </div>
     );
   }
 
+  // Componente principal para mostrar posts
+  const PostsPage = () => (
+    <div className="max-w-4xl mx-auto px-4">
+      <AddPost onAddPostSubmit={handleAddPost} />
+      <Tasks tasks={posts} />
+    </div>
+  );
+
+  // Verificar se é página de perfil para não mostrar navbar
+  const isSpecialPage = location.pathname === '/profile';
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <NavBar />
-      <SessionInfo />
-      <div className="pt-20 pb-24 px-4">
-        <div className="max-w-2xl mx-auto">
-          <Tasks tasks={tasks} />
-        </div>
+      {/* Navbar e SessionInfo apenas se não for página especial */}
+      {!isSpecialPage && (
+        <>
+          <Navbar />
+          <SessionInfo />
+        </>
+      )}
+      
+      <div className={`${!isSpecialPage ? 'pt-20' : ''} pb-24`}>
+        <Routes>
+          {/* Rota principal */}
+          <Route path="/" element={<PostsPage />} />
+          
+          {/* Rota de posts */}
+          <Route path="/posts" element={<PostsPage />} />
+          
+          {/* Rota de perfil */}
+          <Route path="/profile" element={<Profile />} />
+          
+          {/* Rota de favoritos */}
+          <Route path="/favorites" element={
+            <div className="max-w-4xl mx-auto px-4">
+              <div className="text-center py-16">
+                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <div className="text-gray-400">❤️</div>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Favoritos</h2>
+                <p className="text-gray-600">Página em desenvolvimento</p>
+              </div>
+            </div>
+          } />
+          
+          {/* Rota de criar post */}
+          <Route path="/create-post" element={
+            <div className="max-w-4xl mx-auto px-4">
+              <div className="text-center py-16">
+                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <div className="text-gray-400">➕</div>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Criar Publicação</h2>
+                <p className="text-gray-600">Página em desenvolvimento</p>
+              </div>
+            </div>
+          } />
+          
+          {/* Rota de fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </div>
-      <HotBar onAddPostSubmit={onAddPostSubmit} />
+      
+      <HotBar />
     </div>
   );
 }

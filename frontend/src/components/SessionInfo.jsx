@@ -1,102 +1,139 @@
-import { useState, useEffect } from "react";
-import authService from "../utils/auth";
-import { API_URL } from "../config/api";
+import React, { useEffect, useState } from 'react';
+import { User, Clock, Shield } from 'lucide-react';
+import authService from '../utils/auth';
 
-export default function SessionInfo() {
+const SessionInfo = () => {
   const [sessionData, setSessionData] = useState(null);
-  const [showDetails, setShowDetails] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchSessionInfo = async () => {
-      if (!authService.isAuthenticated() || isLoading) return;
-
-      setIsLoading(true);
+  const fetchSessionInfo = async () => {
+    try {
+      console.log('📋 Buscando informações da sessão...');
       
-      try {
-        const response = await authService.authenticatedFetch(`${API_URL}/session-info`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          setSessionData(data);
-        } else {
-          console.log('❌ Erro ao buscar sessão:', response.status);
-          setSessionData(null);
-        }
-      } catch (error) {
-        console.log('⚠️ Erro na sessão (componente):', error.message);
-        
-        // Se for erro de rede em localhost, mostra dados básicos
-        if (window.location.hostname === 'localhost' && error.message.includes('Failed to fetch')) {
-          const user = authService.getCurrentUser();
-          if (user) {
-            setSessionData({
-              user,
-              session: {
-                time_remaining: 300, // Mostra 5 minutos como placeholder
-                expires_at: new Date(Date.now() + 300000).toISOString()
-              }
-            });
-          }
-        } else {
-          setSessionData(null);
+      // Primeiro, tentar obter dados do usuário localmente
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        console.log('👤 Usuário local encontrado:', currentUser);
+        setSessionData({
+          username: currentUser.username,
+          isAdmin: currentUser.isAdmin,
+          loginTime: currentUser.loginTime || new Date().toISOString()
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Se não houver dados locais, tentar buscar do servidor
+      const response = await authService.authenticatedFetch('/session-info');
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Dados da sessão do servidor:', data);
+        setSessionData(data);
+      } else {
+        console.warn('⚠️ Erro ao buscar sessão do servidor, usando dados locais');
+        // Fallback para dados locais se servidor não responder
+        const fallbackUser = authService.getCurrentUser();
+        if (fallbackUser) {
+          setSessionData({
+            username: fallbackUser.username,
+            isAdmin: fallbackUser.isAdmin,
+            loginTime: new Date().toISOString()
+          });
         }
       }
+    } catch (err) {
+      console.warn('⚠️ Erro na sessão (componente):', err.message);
       
-      setIsLoading(false);
-    };
+      // Fallback para dados locais em caso de erro
+      const fallbackUser = authService.getCurrentUser();
+      if (fallbackUser) {
+        setSessionData({
+          username: fallbackUser.username,
+          isAdmin: fallbackUser.isAdmin,
+          loginTime: new Date().toISOString()
+        });
+      } else {
+        setError('Não foi possível carregar dados da sessão');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchSessionInfo();
-    
-    // Atualiza a cada 1 minuto (não 30s)
-    const interval = setInterval(fetchSessionInfo, 60000);
-    
-    return () => clearInterval(interval);
-  }, [isLoading]);
+  }, []);
 
-  if (!sessionData || !authService.isAuthenticated()) return null;
+  const formatLoginTime = (timeString) => {
+    try {
+      const date = new Date(timeString);
+      return date.toLocaleString('pt-BR');
+    } catch {
+      return 'Agora';
+    }
+  };
 
-  const timeRemaining = sessionData.session.time_remaining || 300;
-  const minutes = Math.floor(timeRemaining / 60);
-  const seconds = timeRemaining % 60;
+  if (loading) {
+    return (
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+              <div className="w-32 h-4 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border-b border-red-200">
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="flex items-center gap-2 text-red-700">
+            <Shield size={16} />
+            <span className="text-sm">{error}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!sessionData) {
+    return null;
+  }
 
   return (
-    <div className="fixed top-20 right-4 z-30">
-      <div 
-        className="bg-white shadow-lg rounded-lg p-3 cursor-pointer hover:shadow-xl transition-shadow"
-        onClick={() => setShowDetails(!showDetails)}
-      >
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${
-            timeRemaining > 300 ? 'bg-green-400' : 
-            timeRemaining > 120 ? 'bg-yellow-400' : 
-            'bg-red-400'
-          }`}></div>
-          <span className="text-sm font-medium">
-            {minutes}:{seconds.toString().padStart(2, '0')}
-          </span>
-          {window.location.hostname === 'localhost' && timeRemaining === 300 && (
-            <span className="text-xs text-gray-500">(local)</span>
-          )}
-        </div>
-        
-        {showDetails && (
-          <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
-            <p><strong>Usuário:</strong> {sessionData.user.username}</p>
-            <p><strong>Tipo:</strong> {sessionData.user.isAdmin ? 'Admin' : 'Usuário'}</p>
-            <p><strong>Expira em:</strong> {minutes}min {seconds}s</p>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                authService.logout();
-              }}
-              className="mt-2 text-red-600 hover:text-red-800 font-medium"
-            >
-              Sair
-            </button>
+    <div className="bg-white shadow-sm border-b">
+      <div className="max-w-4xl mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <User size={16} className="text-blue-600" />
+              <span className="font-medium text-gray-900">{sessionData.username}</span>
+              {sessionData.isAdmin && (
+                <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-bold">
+                  ADMIN
+                </span>
+              )}
+            </div>
           </div>
-        )}
+          
+          <div className="flex items-center gap-2 text-gray-600">
+            <Clock size={14} />
+            <span className="text-sm">
+              Conectado em {formatLoginTime(sessionData.loginTime)}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default SessionInfo;

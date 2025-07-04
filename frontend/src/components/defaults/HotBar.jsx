@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Heart, Plus, User } from "lucide-react";
+import { useNavigate, useLocation } from 'react-router-dom';
 import AddPost from "../AddPost"; // Importar o componente AddPost
 
 export default function HotBar({ onAddPostSubmit }) {
   const [active, setActive] = useState("home");
   const [showModal, setShowModal] = useState(false); // Estado para controlar o modal
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const buttons = [
     { id: "home", icon: <Heart className="w-6 h-6" /> },
@@ -14,9 +17,27 @@ export default function HotBar({ onAddPostSubmit }) {
 
   const handleButtonClick = (id) => {
     setActive(id);
+    
     if (id === "post") {
       setShowModal(true); // Mostrar o modal ao clicar no botão "post"
+    } else if (id === "user") {
+      console.log('HotBar: navegando para o perfil');
+      navigate('/profile'); // Navegar para a página de perfil
+    } else if (id === "home") {
+      console.log('HotBar: navegando para home');
+      navigate('/'); // Navegar para a página inicial
     }
+  };
+
+  // Função para verificar se o botão está ativo baseado na rota atual
+  const isActive = (id) => {
+    if (id === "home" && (location.pathname === '/' || location.pathname === '/posts')) {
+      return true;
+    }
+    if (id === "user" && location.pathname === '/profile') {
+      return true;
+    }
+    return active === id;
   };
 
   return (
@@ -48,8 +69,8 @@ export default function HotBar({ onAddPostSubmit }) {
           <button
             key={id}
             onClick={() => handleButtonClick(id)}
-            className={`p-4 rounded-lg ${
-              active === id ? "bg-white bg-opacity-20 text-white" : "text-white"
+            className={`p-4 rounded-lg transition-colors duration-200 ${
+              isActive(id) ? "bg-white bg-opacity-20 text-white" : "text-white hover:bg-white hover:bg-opacity-10"
             }`}
           >
             {icon}
