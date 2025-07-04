@@ -4,6 +4,7 @@ import Navbar from './components/defaults/NavBar';
 import Tasks from './components/Tasks';
 import SessionInfo from './components/SessionInfo';
 import Profile from './components/Profile';
+import AddPost from './components/AddPost';
 import HotBar from './components/defaults/HotBar';
 import authService from './utils/auth';
 import { API_URL } from './config/api';
@@ -47,6 +48,10 @@ function App() {
     }
   };
 
+  const handleAddPost = (newPost) => {
+    setPosts(prevPosts => [newPost, ...prevPosts]);
+  };
+
   // Página de loading apenas para as rotas principais
   if (loading && (location.pathname === '/' || location.pathname === '/posts')) {
     return (
@@ -59,16 +64,15 @@ function App() {
     );
   }
 
-  // Componente principal para mostrar posts
+  // Componente principal para mostrar posts, nao mecha nessa parte, nao sei como esta funcionando
   const PostsPage = () => (
     <div className="max-w-4xl mx-auto px-4">
-      
       <Tasks tasks={posts} />
     </div>
   );
 
-  // Verificar se é página de perfil para não mostrar navbar
-  const isSpecialPage = location.pathname === '/profile';
+  // Verificar se é página especial para não mostrar navbar
+  const isSpecialPage = location.pathname === '/profile' || location.pathname === '/create-post';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -80,7 +84,7 @@ function App() {
         </>
       )}
       
-      <div className={`${!isSpecialPage ? 'pt-20' : ''} pb-24`}>
+      <div className={`${!isSpecialPage ? 'pt-20' : ''}`}>
         <Routes>
           {/* Rota principal */}
           <Route path="/" element={<PostsPage />} />
@@ -91,37 +95,16 @@ function App() {
           {/* Rota de perfil */}
           <Route path="/profile" element={<Profile />} />
           
-          {/* Rota de favoritos */}
-          <Route path="/favorites" element={
-            <div className="max-w-4xl mx-auto px-4">
-              <div className="text-center py-16">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <div className="text-gray-400">❤️</div>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Favoritos</h2>
-                <p className="text-gray-600">Página em desenvolvimento</p>
-              </div>
-            </div>
-          } />
-          
           {/* Rota de criar post */}
-          <Route path="/create-post" element={
-            <div className="max-w-4xl mx-auto px-4">
-              <div className="text-center py-16">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <div className="text-gray-400">➕</div>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Criar Publicação</h2>
-                <p className="text-gray-600">Página em desenvolvimento</p>
-              </div>
-            </div>
-          } />
+          <Route path="/create-post" element={<AddPost onAddPostSubmit={handleAddPost} />} />
+          
           
           {/* Rota de fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
       
+      {/* HotBar sempre visível */}
       <HotBar />
     </div>
   );

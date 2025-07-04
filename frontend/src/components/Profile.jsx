@@ -112,7 +112,7 @@ const Profile = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
           <p className="mt-4 text-gray-600">Carregando suas publicações...</p>
         </div>
       </div>
@@ -128,7 +128,7 @@ const Profile = () => {
             <p>{error}</p>
           </div>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/posts')}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
             Voltar ao Início
@@ -157,11 +157,11 @@ const Profile = () => {
   return (
     <div className="bg-gray-50 min-h-screen pb-24">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <div className="bg-gradient-to-r from-purple-900 to-purple-400 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/posts')}
               className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors duration-200"
             >
               <ArrowLeft size={20} />
@@ -200,13 +200,6 @@ const Profile = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold text-gray-900">Minhas Publicações de Adoção</h2>
-          <button
-            onClick={() => navigate('/create-post')}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-          >
-            <Plus size={20} />
-            <span className="hidden sm:inline">Nova Publicação</span>
-          </button>
         </div>
 
         {userPosts.length === 0 ? (

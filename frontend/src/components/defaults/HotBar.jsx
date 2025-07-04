@@ -25,7 +25,7 @@ export default function HotBar({ onAddPostSubmit }) {
       navigate('/profile'); // Navegar para a página de perfil
     } else if (id === "home") {
       console.log('HotBar: navegando para home');
-      navigate('/'); // Navegar para a página inicial
+      navigate('/posts'); // Navegar para a página inicial
     }
   };
 
