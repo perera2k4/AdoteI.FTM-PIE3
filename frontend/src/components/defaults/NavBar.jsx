@@ -31,7 +31,7 @@ export default function Navbar() {
       <div className="flex items-center gap-4">
         
         <h1 className="text-xs w-[150px] font-bold text-purple-700">
-          <img src="public/assets/logo.png" alt="Logo" />
+          <img src="/assets/logo.png" alt="Logo" />
         </h1>
       </div>
 
