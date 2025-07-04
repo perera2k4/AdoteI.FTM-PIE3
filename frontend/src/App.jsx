@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Navbar from './components/defaults/NavBar';
-import AddPost from './components/AddPost';
 import Tasks from './components/Tasks';
 import SessionInfo from './components/SessionInfo';
 import Profile from './components/Profile';
@@ -48,10 +47,6 @@ function App() {
     }
   };
 
-  const handleAddPost = (newPost) => {
-    setPosts([newPost, ...posts]);
-  };
-
   // Página de loading apenas para as rotas principais
   if (loading && (location.pathname === '/' || location.pathname === '/posts')) {
     return (
@@ -67,7 +62,7 @@ function App() {
   // Componente principal para mostrar posts
   const PostsPage = () => (
     <div className="max-w-4xl mx-auto px-4">
-      <AddPost onAddPostSubmit={handleAddPost} />
+      
       <Tasks tasks={posts} />
     </div>
   );

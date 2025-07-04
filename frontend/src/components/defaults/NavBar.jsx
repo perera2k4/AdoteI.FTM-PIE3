@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, User } from "lucide-react";
+import { User } from "lucide-react";
 import authService from "../../utils/auth";
 
 export default function Navbar() {
@@ -29,16 +29,13 @@ export default function Navbar() {
   return (
     <nav className="w-full bg-white shadow-md p-4 flex justify-between items-center fixed top-0 z-50">
       <div className="flex items-center gap-4">
-        <div className="bg-purple-100 rounded-full p-2">
-          <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-            A
-          </div>
-        </div>
-        <h1 className="text-xl font-bold text-purple-700">AdoteI.FTM</h1>
+        
+        <h1 className="text-xs w-[150px] font-bold text-purple-700">
+          <img src="public/assets/logo.png" alt="Logo" />
+        </h1>
       </div>
 
       <div className="flex items-center gap-4">
-        <Bell className="w-6 h-6 text-purple-700 cursor-pointer hover:text-purple-900 transition-colors" />
         
         <div className="flex items-center gap-2">
           <User className="w-8 h-8 bg-gray-400 p-1 rounded-full text-white" />
