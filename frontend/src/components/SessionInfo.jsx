@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { User, Clock, Shield } from 'lucide-react';
 import authService from '../utils/auth';
 

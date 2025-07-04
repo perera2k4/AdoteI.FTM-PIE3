@@ -1,377 +1,539 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from pymongo import MongoClient
-import bcrypt
-import base64
-import jwt
-import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+from bson import ObjectId
 import os
-import uuid
+from datetime import datetime, timedelta
+import base64
+import secrets
 
 app = Flask(__name__)
 
-# CORS
+# Configuração do CORS mais permissiva
 CORS(app, 
-     origins=[
-         "http://localhost:3000",
-         "http://localhost:5173",
-         "http://127.0.0.1:5173",
-         "https://adote-i-ftm-pie-3.vercel.app",
-         "https://*.vercel.app"
-     ],
-     allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With", "Origin"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     supports_credentials=True
-)
+     origins=['http://localhost:5173', 'http://127.0.0.1:5173'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
+     supports_credentials=True)
 
-# Configuração
-SECRET_KEY = os.environ.get("SECRET_KEY", "beef8000bc175089cadf2701a9979ac4")
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://devbrunocarvalho:jO7Uy2UqCwPmrLOl@adoteiftm.4lsu0xb.mongodb.net/?retryWrites=true&w=majority&appName=AdoteIFTM")
+# Chave secreta para sessões
+app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 
-# Configuração de sessão
-SESSION_TIMEOUT = 600  # 10 minutos em segundos
-
+# Configuração do MongoDB
 try:
+    MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/adote_iftm')
     client = MongoClient(MONGO_URI)
-    db = client["AdoteIFTM"]
-    posts_collection = db["posts"]
-    adotados_collection = db["adotados"]
-    users_collection = db["users"]
-    sessions_collection = db["sessions"]  # Nova coleção para sessões
+    db = client.adote_iftm
     
-    client.admin.command('ping')
-    print("✅ MongoDB conectado com sucesso!")
+    # Coleções
+    users_collection = db.users
+    posts_collection = db.posts
+    adopted_collection = db.adopted  # Nova coleção para pets adotados
+    
+    print("✅ Conectado ao MongoDB com sucesso")
 except Exception as e:
-    print(f"❌ Erro na conexão MongoDB: {e}")
+    print(f"❌ Erro ao conectar com MongoDB: {e}")
+    db = None
 
-@app.after_request
-def after_request(response):
-    origin = request.headers.get('Origin')
-    allowed_origins = [
-        'http://localhost:3000',
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'https://adote-i-ftm-pie-3.vercel.app'
-    ]
-    
-    if origin in allowed_origins:
-        response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,Accept,X-Requested-With,Origin'
-        response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-    
-    return response
+# Middleware para verificar autenticação
+def require_auth():
+    if 'username' not in session:
+        return jsonify({'error': 'Não autorizado'}), 401
+    return None
 
-# Funções auxiliares para sessões
-def create_session(username):
-    """Cria uma nova sessão para o usuário"""
-    session_id = str(uuid.uuid4())
-    session_data = {
-        "session_id": session_id,
-        "username": username,
-        "created_at": datetime.datetime.utcnow(),
-        "last_activity": datetime.datetime.utcnow(),
-        "expires_at": datetime.datetime.utcnow() + datetime.timedelta(seconds=SESSION_TIMEOUT)
-    }
-    
-    # Remove sessões antigas do usuário
-    sessions_collection.delete_many({"username": username})
-    
-    # Cria nova sessão
-    sessions_collection.insert_one(session_data)
-    
-    print(f"✅ Sessão criada para {username}: {session_id}")
-    return session_id
-
-def validate_session(session_id):
-    """Valida se a sessão existe e não expirou"""
-    if not session_id:
+# Função para converter ObjectId para string
+def serialize_doc(doc):
+    if doc is None:
         return None
+    if isinstance(doc, list):
+        return [serialize_doc(item) for item in doc]
+    if isinstance(doc, dict):
+        serialized = {}
+        for key, value in doc.items():
+            if isinstance(value, ObjectId):
+                serialized[key] = str(value)
+            elif isinstance(value, datetime):
+                serialized[key] = value.isoformat()
+            elif isinstance(value, dict):
+                serialized[key] = serialize_doc(value)
+            elif isinstance(value, list):
+                serialized[key] = [serialize_doc(item) for item in value]
+            else:
+                serialized[key] = value
+        return serialized
+    return doc
+
+# Rotas de autenticação
+@app.route('/register', methods=['POST'])
+def register():
+    try:
+        data = request.get_json()
         
-    session = sessions_collection.find_one({"session_id": session_id})
-    
-    if not session:
-        print(f"❌ Sessão não encontrada: {session_id}")
-        return None
-    
-    # Verifica se expirou
-    if datetime.datetime.utcnow() > session["expires_at"]:
-        print(f"⏰ Sessão expirada: {session_id}")
-        sessions_collection.delete_one({"session_id": session_id})
-        return None
-    
-    # Atualiza última atividade
-    sessions_collection.update_one(
-        {"session_id": session_id},
-        {
-            "$set": {
-                "last_activity": datetime.datetime.utcnow(),
-                "expires_at": datetime.datetime.utcnow() + datetime.timedelta(seconds=SESSION_TIMEOUT)
-            }
+        if not data or not data.get('username') or not data.get('password'):
+            return jsonify({'error': 'Username e password são obrigatórios'}), 400
+        
+        username = data['username'].strip()
+        password = data['password']
+        phone_number = data.get('phoneNumber', '').strip()
+        
+        # Verificar se o usuário já existe
+        if users_collection.find_one({'username': username}):
+            return jsonify({'error': 'Usuário já existe'}), 400
+        
+        # Criar novo usuário
+        user_doc = {
+            'username': username,
+            'password': generate_password_hash(password),
+            'phoneNumber': phone_number,
+            'isAdmin': False,
+            'created_at': datetime.utcnow()
         }
-    )
-    
-    return session
-
-def get_user_from_session(session_id):
-    """Retorna dados do usuário baseado na sessão"""
-    session = validate_session(session_id)
-    if not session:
-        return None
-    
-    user = users_collection.find_one({"username": session["username"]})
-    return user
-
-def delete_session(session_id):
-    """Remove uma sessão específica"""
-    if session_id:
-        sessions_collection.delete_one({"session_id": session_id})
-        print(f"🗑️ Sessão removida: {session_id}")
-
-def cleanup_expired_sessions():
-    """Remove todas as sessões expiradas"""
-    result = sessions_collection.delete_many({
-        "expires_at": {"$lt": datetime.datetime.utcnow()}
-    })
-    if result.deleted_count > 0:
-        print(f"🧹 {result.deleted_count} sessões expiradas removidas")
-
-# Decorator para rotas protegidas
-def session_required(f):
-    from functools import wraps
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        session_id = None
         
-        # Busca session_id no header Authorization
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            if auth_header.startswith("Session "):
-                session_id = auth_header.split(" ")[1]
+        result = users_collection.insert_one(user_doc)
         
-        if not session_id:
-            return jsonify({'error': 'Sessão não fornecida!'}), 401
-        
-        current_user = get_user_from_session(session_id)
-        if not current_user:
-            return jsonify({'error': 'Sessão inválida ou expirada!'}), 401
+        if result.inserted_id:
+            return jsonify({'message': 'Usuário registrado com sucesso'}), 201
+        else:
+            return jsonify({'error': 'Erro ao registrar usuário'}), 500
             
-        return f(current_user, *args, **kwargs)
-    return decorated
+    except Exception as e:
+        print(f"Erro no registro: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
 
-# Rotas da API
-@app.route("/", methods=["GET"])
-def home():
-    cleanup_expired_sessions()  # Limpeza automática
+@app.route('/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('username') or not data.get('password'):
+            return jsonify({'error': 'Username e password são obrigatórios'}), 400
+        
+        username = data['username'].strip()
+        password = data['password']
+        
+        # Buscar usuário
+        user = users_collection.find_one({'username': username})
+        
+        if not user or not check_password_hash(user['password'], password):
+            return jsonify({'error': 'Credenciais inválidas'}), 401
+        
+        # Criar sessão
+        session['username'] = username
+        session['isAdmin'] = user.get('isAdmin', False)
+        session['phoneNumber'] = user.get('phoneNumber', '')
+        
+        return jsonify({
+            'message': 'Login realizado com sucesso',
+            'user': {
+                'username': username,
+                'isAdmin': user.get('isAdmin', False),
+                'phoneNumber': user.get('phoneNumber', '')
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f"Erro no login: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({'message': 'Logout realizado com sucesso'}), 200
+
+@app.route('/session-info', methods=['GET'])
+def session_info():
+    if 'username' not in session:
+        return jsonify({'error': 'Não autenticado'}), 401
+    
     return jsonify({
-        "message": "🎉 API AdoteIFTM funcionando!", 
-        "status": "online",
-        "version": "2.0.0",
-        "session_timeout": f"{SESSION_TIMEOUT}s",
-        "endpoints": {
-            "login": "POST /login",
-            "register": "POST /register", 
-            "logout": "POST /logout",
-            "session-info": "GET /session-info",
-            "posts": "GET /posts",
-            "upload": "POST /upload (protegida)",
-            "adotados": "GET /adotados"
-        }
+        'username': session['username'],
+        'isAdmin': session.get('isAdmin', False),
+        'phoneNumber': session.get('phoneNumber', '')
     }), 200
 
-@app.route("/register", methods=["POST", "OPTIONS"])
-def register():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-        
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({"error": "Dados JSON inválidos"}), 400
-            
-        username = data.get("username")
-        password = data.get("password")
-        phone_number = data.get("phoneNumber")
-        is_admin = data.get("isAdmin", False)
-
-        if not username or not password or not phone_number:
-            return jsonify({"error": "Todos os campos são obrigatórios"}), 400
-
-        if users_collection.find_one({"username": username}):
-            return jsonify({"error": "Usuário já existe"}), 400
-
-        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-
-        user = {
-            "username": username,
-            "password": hashed_password.decode("utf-8"),
-            "phoneNumber": phone_number,
-            "isAdmin": is_admin,
-            "created_at": datetime.datetime.utcnow()
-        }
-        
-        users_collection.insert_one(user)
-        print(f"✅ Usuário criado: {username}")
-
-        return jsonify({"message": "Usuário cadastrado com sucesso!"}), 201
-    except Exception as e:
-        print(f"❌ Erro no registro: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/login", methods=["POST", "OPTIONS"])
-def login():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-        
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({"error": "Dados JSON inválidos"}), 400
-            
-        username = data.get("username")
-        password = data.get("password")
-
-        if not username or not password:
-            return jsonify({"error": "Todos os campos são obrigatórios"}), 400
-
-        user = users_collection.find_one({"username": username})
-
-        if not user:
-            return jsonify({"error": "Usuário não encontrado"}), 404
-
-        if not bcrypt.checkpw(password.encode("utf-8"), user["password"].encode("utf-8")):
-            return jsonify({"error": "Senha incorreta"}), 401
-
-        # Cria sessão
-        session_id = create_session(username)
-
-        print(f"✅ Login bem-sucedido: {username}")
-
-        return jsonify({
-            "message": "Login realizado com sucesso!",
-            "session_id": session_id,
-            "user": {
-                "username": user["username"],
-                "isAdmin": user.get("isAdmin", False),
-                "phoneNumber": user.get("phoneNumber")
-            },
-            "expires_in": SESSION_TIMEOUT
-        }), 200
-    except Exception as e:
-        print(f"❌ Erro no login: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/logout", methods=["POST", "OPTIONS"])
-def logout():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-        
-    try:
-        session_id = None
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            if auth_header.startswith("Session "):
-                session_id = auth_header.split(" ")[1]
-        
-        if session_id:
-            delete_session(session_id)
-        
-        return jsonify({"message": "Logout realizado com sucesso!"}), 200
-    except Exception as e:
-        print(f"❌ Erro no logout: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/session-info", methods=["GET", "OPTIONS"])
-@session_required
-def session_info(current_user):
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-        
-    try:
-        session_id = request.headers.get('Authorization', '').replace('Session ', '')
-        session = sessions_collection.find_one({"session_id": session_id})
-        
-        return jsonify({
-            "user": {
-                "username": current_user["username"],
-                "isAdmin": current_user.get("isAdmin", False),
-                "phoneNumber": current_user.get("phoneNumber")
-            },
-            "session": {
-                "created_at": session["created_at"].isoformat(),
-                "last_activity": session["last_activity"].isoformat(),
-                "expires_at": session["expires_at"].isoformat(),
-                "time_remaining": int((session["expires_at"] - datetime.datetime.utcnow()).total_seconds())
-            }
-        }), 200
-    except Exception as e:
-        print(f"❌ Erro ao buscar info da sessão: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/upload", methods=["POST", "OPTIONS"])
-@session_required
-def upload_post(current_user):
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-        
-    try:
-        title = request.form.get("title")
-        description = request.form.get("description")
-        animal_type = request.form.get("animalType")
-        image = request.files.get("image")
-        username = current_user["username"]
-
-        if not title or not description or not animal_type or not image:
-            return jsonify({"error": "Todos os campos são obrigatórios"}), 400
-
-        image_base64 = base64.b64encode(image.read()).decode("utf-8")
-
-        post = {
-            "title": title,
-            "description": description,
-            "animalType": animal_type,
-            "image": image_base64,
-            "username": username,
-            "created_at": datetime.datetime.utcnow()
-        }
-
-        result = posts_collection.insert_one(post)
-        post["_id"] = str(result.inserted_id)
-
-        return jsonify({"message": "Post criado com sucesso!", "post": post}), 201
-    except Exception as e:
-        print(f"❌ Erro no upload: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/posts", methods=["GET"])
+# Rotas de posts
+@app.route('/posts', methods=['GET'])
 def get_posts():
     try:
-        posts = list(posts_collection.find({}))
-        for post in posts:
-            post["_id"] = str(post["_id"])
-            user = users_collection.find_one({"username": post["username"]})
-            if user:
-                post["phoneNumber"] = user.get("phoneNumber", None)
-        
-        return jsonify(posts), 200
+        posts = list(posts_collection.find().sort('created_at', -1))
+        return jsonify(serialize_doc(posts)), 200
     except Exception as e:
-        print(f"❌ Erro ao buscar posts: {e}")
-        return jsonify({"error": str(e)}), 500
+        print(f"Erro ao buscar posts: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
 
-@app.route("/adotados", methods=["GET"])
-def get_adotados():
+@app.route('/posts', methods=['POST'])
+def create_post():
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
     try:
-        adotados = list(adotados_collection.find({}))
-        for post in adotados:
-            post["_id"] = str(post["_id"])
-        return jsonify(adotados), 200
+        data = request.get_json()
+        
+        if not data or not data.get('title'):
+            return jsonify({'error': 'Título é obrigatório'}), 400
+        
+        post_doc = {
+            'title': data['title'].strip(),
+            'description': data.get('description', '').strip(),
+            'animalType': data.get('animalType', 'dog'),
+            'image': data.get('image', ''),
+            'username': session['username'],
+            'phoneNumber': session.get('phoneNumber', ''),
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow()
+        }
+        
+        result = posts_collection.insert_one(post_doc)
+        
+        if result.inserted_id:
+            post_doc['_id'] = str(result.inserted_id)
+            return jsonify(serialize_doc(post_doc)), 201
+        else:
+            return jsonify({'error': 'Erro ao criar post'}), 500
+            
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Erro ao criar post: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    print(f"🚀 Iniciando servidor na porta {port}")
-    print(f"⏰ Timeout de sessão: {SESSION_TIMEOUT}s")
-    app.run(host="0.0.0.0", port=port, debug=False)
+@app.route('/posts/<post_id>', methods=['GET'])
+def get_post(post_id):
+    try:
+        if not ObjectId.is_valid(post_id):
+            return jsonify({'error': 'ID inválido'}), 400
+        
+        post = posts_collection.find_one({'_id': ObjectId(post_id)})
+        
+        if not post:
+            return jsonify({'error': 'Post não encontrado'}), 404
+        
+        return jsonify(serialize_doc(post)), 200
+        
+    except Exception as e:
+        print(f"Erro ao buscar post: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@app.route('/posts/<post_id>', methods=['PUT'])
+def update_post(post_id):
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    try:
+        if not ObjectId.is_valid(post_id):
+            return jsonify({'error': 'ID inválido'}), 400
+        
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'Dados são obrigatórios'}), 400
+        
+        # Buscar o post existente
+        existing_post = posts_collection.find_one({'_id': ObjectId(post_id)})
+        
+        if not existing_post:
+            return jsonify({'error': 'Post não encontrado'}), 404
+        
+        # Verificar se o usuário é o dono do post ou admin
+        if existing_post['username'] != session['username'] and not session.get('isAdmin', False):
+            return jsonify({'error': 'Não autorizado a editar este post'}), 403
+        
+        # Preparar dados para atualização
+        update_data = {
+            'updated_at': datetime.utcnow()
+        }
+        
+        # Atualizar apenas os campos fornecidos
+        if 'title' in data:
+            update_data['title'] = data['title'].strip()
+        if 'description' in data:
+            update_data['description'] = data['description'].strip()
+        if 'animalType' in data:
+            update_data['animalType'] = data['animalType']
+        if 'image' in data:
+            update_data['image'] = data['image']
+        
+        # Atualizar o post
+        result = posts_collection.update_one(
+            {'_id': ObjectId(post_id)},
+            {'$set': update_data}
+        )
+        
+        if result.modified_count > 0:
+            # Buscar o post atualizado
+            updated_post = posts_collection.find_one({'_id': ObjectId(post_id)})
+            return jsonify(serialize_doc(updated_post)), 200
+        else:
+            return jsonify({'error': 'Nenhuma alteração realizada'}), 400
+            
+    except Exception as e:
+        print(f"Erro ao atualizar post: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@app.route('/posts/<post_id>', methods=['PATCH'])
+def patch_post(post_id):
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    try:
+        if not ObjectId.is_valid(post_id):
+            return jsonify({'error': 'ID inválido'}), 400
+        
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'Dados são obrigatórios'}), 400
+        
+        # Buscar o post existente
+        existing_post = posts_collection.find_one({'_id': ObjectId(post_id)})
+        
+        if not existing_post:
+            return jsonify({'error': 'Post não encontrado'}), 404
+        
+        # Verificar se o usuário é o dono do post ou admin
+        if existing_post['username'] != session['username'] and not session.get('isAdmin', False):
+            return jsonify({'error': 'Não autorizado a editar este post'}), 403
+        
+        # Preparar dados para atualização (PATCH permite atualizações parciais)
+        update_data = {
+            'updated_at': datetime.utcnow()
+        }
+        
+        # Atualizar apenas os campos fornecidos
+        allowed_fields = ['title', 'description', 'animalType', 'image']
+        for field in allowed_fields:
+            if field in data:
+                update_data[field] = data[field]
+        
+        # Atualizar o post
+        result = posts_collection.update_one(
+            {'_id': ObjectId(post_id)},
+            {'$set': update_data}
+        )
+        
+        if result.modified_count > 0:
+            # Buscar o post atualizado
+            updated_post = posts_collection.find_one({'_id': ObjectId(post_id)})
+            return jsonify(serialize_doc(updated_post)), 200
+        else:
+            return jsonify({'message': 'Nenhuma alteração necessária'}), 200
+            
+    except Exception as e:
+        print(f"Erro ao fazer patch do post: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@app.route('/posts/<post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    try:
+        if not ObjectId.is_valid(post_id):
+            return jsonify({'error': 'ID inválido'}), 400
+        
+        # Buscar o post existente
+        existing_post = posts_collection.find_one({'_id': ObjectId(post_id)})
+        
+        if not existing_post:
+            return jsonify({'error': 'Post não encontrado'}), 404
+        
+        # Verificar se o usuário é o dono do post ou admin
+        if existing_post['username'] != session['username'] and not session.get('isAdmin', False):
+            return jsonify({'error': 'Não autorizado a deletar este post'}), 403
+        
+        # Deletar o post
+        result = posts_collection.delete_one({'_id': ObjectId(post_id)})
+        
+        if result.deleted_count > 0:
+            return jsonify({'message': 'Post deletado com sucesso'}), 200
+        else:
+            return jsonify({'error': 'Erro ao deletar post'}), 500
+            
+    except Exception as e:
+        print(f"Erro ao deletar post: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+# Rotas para pets adotados
+@app.route('/adotados', methods=['GET'])
+def get_adopted_pets():
+    try:
+        adopted_pets = list(adopted_collection.find().sort('adopted_date', -1))
+        return jsonify(serialize_doc(adopted_pets)), 200
+    except Exception as e:
+        print(f"Erro ao buscar pets adotados: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@app.route('/adotados', methods=['POST'])
+def create_adopted_pet():
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'Dados são obrigatórios'}), 400
+        
+        # Preparar documento para pets adotados
+        adopted_doc = {
+            'title': data.get('title', ''),
+            'description': data.get('description', ''),
+            'animalType': data.get('animalType', 'dog'),
+            'image': data.get('image', ''),
+            'username': data.get('username', session['username']),
+            'phoneNumber': data.get('phoneNumber', session.get('phoneNumber', '')),
+            'original_post_id': data.get('original_post_id', ''),
+            'adopted_date': datetime.utcnow(),
+            'adopted_by': session['username'],
+            'created_at': data.get('created_at', datetime.utcnow())
+        }
+        
+        result = adopted_collection.insert_one(adopted_doc)
+        
+        if result.inserted_id:
+            adopted_doc['_id'] = str(result.inserted_id)
+            return jsonify(serialize_doc(adopted_doc)), 201
+        else:
+            return jsonify({'error': 'Erro ao marcar pet como adotado'}), 500
+            
+    except Exception as e:
+        print(f"Erro ao criar registro de adoção: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@app.route('/adotados/<adopted_id>', methods=['DELETE'])
+def delete_adopted_pet(adopted_id):
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    try:
+        if not ObjectId.is_valid(adopted_id):
+            return jsonify({'error': 'ID inválido'}), 400
+        
+        # Buscar o registro existente
+        existing_adopted = adopted_collection.find_one({'_id': ObjectId(adopted_id)})
+        
+        if not existing_adopted:
+            return jsonify({'error': 'Registro não encontrado'}), 404
+        
+        # Verificar se o usuário é o dono do registro ou admin
+        if existing_adopted['username'] != session['username'] and not session.get('isAdmin', False):
+            return jsonify({'error': 'Não autorizado a deletar este registro'}), 403
+        
+        # Deletar o registro
+        result = adopted_collection.delete_one({'_id': ObjectId(adopted_id)})
+        
+        if result.deleted_count > 0:
+            return jsonify({'message': 'Registro de adoção deletado com sucesso'}), 200
+        else:
+            return jsonify({'error': 'Erro ao deletar registro'}), 500
+            
+    except Exception as e:
+        print(f"Erro ao deletar registro de adoção: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+# Rota para upload de imagens
+@app.route('/upload', methods=['POST'])
+def upload_image():
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('image'):
+            return jsonify({'error': 'Imagem é obrigatória'}), 400
+        
+        # Validar se é uma imagem base64 válida
+        image_data = data['image']
+        if not image_data.startswith('data:image'):
+            return jsonify({'error': 'Formato de imagem inválido'}), 400
+        
+        # Remover o prefixo da imagem base64
+        image_base64 = image_data.split(',')[1] if ',' in image_data else image_data
+        
+        # Validar base64
+        try:
+            base64.b64decode(image_base64)
+        except Exception:
+            return jsonify({'error': 'Dados de imagem inválidos'}), 400
+        
+        return jsonify({
+            'message': 'Imagem processada com sucesso',
+            'imageData': image_base64
+        }), 200
+        
+    except Exception as e:
+        print(f"Erro no upload: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+# Rota para estatísticas (admin)
+@app.route('/stats', methods=['GET'])
+def get_stats():
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    if not session.get('isAdmin', False):
+        return jsonify({'error': 'Acesso negado - apenas administradores'}), 403
+    
+    try:
+        total_posts = posts_collection.count_documents({})
+        total_adopted = adopted_collection.count_documents({})
+        total_users = users_collection.count_documents({})
+        
+        # Posts por tipo de animal
+        dogs_count = posts_collection.count_documents({'animalType': 'dog'})
+        cats_count = posts_collection.count_documents({'animalType': 'cat'})
+        
+        # Adoções por mês (últimos 6 meses)
+        six_months_ago = datetime.utcnow() - timedelta(days=180)
+        recent_adoptions = list(adopted_collection.find({
+            'adopted_date': {'$gte': six_months_ago}
+        }).sort('adopted_date', -1))
+        
+        return jsonify({
+            'total_posts': total_posts,
+            'total_adopted': total_adopted,
+            'total_users': total_users,
+            'dogs_count': dogs_count,
+            'cats_count': cats_count,
+            'recent_adoptions': serialize_doc(recent_adoptions)
+        }), 200
+        
+    except Exception as e:
+        print(f"Erro ao buscar estatísticas: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+# Rota de health check
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat(),
+        'database': 'connected' if db else 'disconnected'
+    }), 200
+
+# Tratamento de erro 404
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Endpoint não encontrado'}), 404
+
+# Tratamento de erro 500
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({'error': 'Erro interno do servidor'}), 500
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') == 'development'
+    
+    print(f"🚀 Servidor iniciando na porta {port}")
+    print(f"🔧 Debug mode: {debug}")
+    
+    app.run(host='0.0.0.0', port=port, debug=debug)

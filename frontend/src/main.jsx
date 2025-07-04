@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App.jsx'
 import Login from './components/userdata/Login.jsx'
 import Profile from './components/Profile.jsx'
+import AddPost from './components/AddPost.jsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/" element={<Login />} />
         <Route path="/posts" element={<App />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/create-post" element={<AddPost />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
