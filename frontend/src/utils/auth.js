@@ -256,6 +256,9 @@ class AuthService {
       throw new Error("Usuário não autenticado");
     }
 
+    // Constrói URL completa se não for absoluta
+    const fullUrl = url.startsWith('http') ? url : `${API_URL}${url}`;
+
     const headers = {
       Authorization: `Session ${this.sessionId}`,
       ...options.headers,
@@ -270,10 +273,10 @@ class AuthService {
     }
 
     console.log("🔄 Headers da requisição:", headers);
-    console.log("🔄 URL da requisição:", url);
+    console.log("🔄 URL completa da requisição:", fullUrl);
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(fullUrl, {
         ...options,
         headers,
       });

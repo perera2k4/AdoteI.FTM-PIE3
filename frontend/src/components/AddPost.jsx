@@ -3,7 +3,6 @@ import { Dog, Cat, Upload, Save, Camera } from "lucide-react";
 import Input from "./Input";
 import Button from "./Button";
 import authService from "../utils/auth";
-import { API_URL } from "../config/api";
 
 function AddPost({ onAddPostSubmit }) {
   const [title, setTitle] = useState("");
@@ -16,6 +15,18 @@ function AddPost({ onAddPostSubmit }) {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validar tamanho da imagem (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert("A imagem deve ter no máximo 5MB");
+        return;
+      }
+
+      // Validar tipo de arquivo
+      if (!file.type.startsWith('image/')) {
+        alert("Por favor, selecione apenas arquivos de imagem");
+        return;
+      }
+
       setImage(file);
 
       // Criar preview da imagem
@@ -39,36 +50,33 @@ function AddPost({ onAddPostSubmit }) {
     setLoading(true);
 
     const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
+    formData.append("title", title.trim());
+    formData.append("description", description.trim());
     formData.append("animalType", animalType);
     formData.append("image", image);
 
     try {
-      console.log("📤 Enviando post para:", `${API_URL}/upload`);
+      console.log("📤 Enviando post para:", `/upload`);
       console.log("📝 Dados do post:", {
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim(),
         animalType,
         imageSize: image.size,
-        imageName: image.name
+        imageName: image.name,
+        imageType: image.type
       });
 
-      const response = await authService.authenticatedFetch(
-        `${API_URL}/upload`,
-        {
-          method: "POST",
-          body: formData,
-          // authenticatedFetch já adiciona o header Authorization
-          // e remove Content-Type para FormData
-        }
-      );
+      const response = await authService.authenticatedFetch("/upload", {
+        method: "POST",
+        body: formData,
+      });
 
       console.log("🔄 Resposta recebida:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error("❌ Erro na resposta:", errorText);
+        
         let errorMessage = "Erro ao criar o post";
         
         try {
@@ -76,6 +84,7 @@ function AddPost({ onAddPostSubmit }) {
           errorMessage = errorData.error || errorMessage;
         } catch (e) {
           console.error("❌ Erro ao parsear resposta:", e);
+          errorMessage = `Erro do servidor: ${response.status}`;
         }
         
         throw new Error(errorMessage);
@@ -105,6 +114,8 @@ function AddPost({ onAddPostSubmit }) {
         alert("Sua sessão expirou. Você será redirecionado para o login.");
       } else if (error.message.includes("Failed to fetch")) {
         alert("Erro de conexão com o servidor. Verifique sua internet e tente novamente.");
+      } else if (error.message.includes("NetworkError")) {
+        alert("Erro de rede. Verifique sua conexão e tente novamente.");
       } else {
         alert(error.message || "Erro ao enviar o post. Tente novamente.");
       }
@@ -213,6 +224,9 @@ function AddPost({ onAddPostSubmit }) {
                 <Camera size={32} className="mx-auto mb-3 text-gray-400" />
                 <p className="text-gray-600 mb-3 text-sm">
                   Adicione uma foto do pet
+                </p>
+                <p className="text-xs text-gray-500">
+                  Máximo 5MB - JPG, PNG, GIF
                 </p>
               </div>
               <label className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors text-sm">
