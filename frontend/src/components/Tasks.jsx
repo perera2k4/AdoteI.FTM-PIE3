@@ -14,7 +14,7 @@ function Tasks({ tasks }) {
 
   const gerarLinkWhatsApp = (numeroUsuario, nomeUsuario, nomeAnimal) => {
     if (!numeroUsuario) {
-      console.error("Número de telefone não fornecido para o usuário.");
+      //console.error("Número de telefone não fornecido para o usuário.");
       return "#"; // Retorna um link vazio se o número não estiver disponível
     }
 

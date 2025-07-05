@@ -58,26 +58,26 @@ function AddPost() {
     formData.append("image", image);
 
     try {
-      console.log("📤 Enviando post para:", `/upload`);
-      console.log("📝 Dados do post:", {
-        title: title.trim(),
-        description: description.trim(),
-        animalType,
-        imageSize: image.size,
-        imageName: image.name,
-        imageType: image.type
-      });
+      //console.log("📤 Enviando post para:", `/upload`);
+      //console.log("📝 Dados do post:", {
+      //  title: title.trim(),
+      //  description: description.trim(),
+      //  animalType,
+      //  imageSize: image.size,
+      //  imageName: image.name,
+      //  imageType: image.type
+      //});
 
       const response = await authService.authenticatedFetch("/upload", {
         method: "POST",
         body: formData,
       });
 
-      console.log("🔄 Resposta recebida:", response.status);
+      //console.log("🔄 Resposta recebida:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ Erro na resposta:", errorText);
+        //console.error("❌ Erro na resposta:", errorText);
         
         let errorMessage = "Erro ao criar o post";
         
@@ -85,7 +85,7 @@ function AddPost() {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
         } catch (e) {
-          console.error("❌ Erro ao parsear resposta:", e);
+          //console.error("❌ Erro ao parsear resposta:", e);
           errorMessage = `Erro do servidor: ${response.status}`;
         }
         
@@ -93,7 +93,7 @@ function AddPost() {
       }
 
       const data = await response.json();
-      console.log("✅ Post criado com sucesso:", data);
+      //console.log("✅ Post criado com sucesso:", data);
       
       // Adiciona o phoneNumber do usuário atual ao post
       const currentUser = authService.getCurrentUser();
@@ -111,7 +111,7 @@ function AddPost() {
       navigate("/profile");
       
     } catch (error) {
-      console.error("❌ Erro ao enviar o post:", error);
+      //console.error("❌ Erro ao enviar o post:", error);
       
       if (error.message === "Sessão expirada") {
         alert("Sua sessão expirou. Você será redirecionado para o login.");

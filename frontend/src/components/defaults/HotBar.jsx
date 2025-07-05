@@ -21,10 +21,10 @@ export default function HotBar({ onAddPostSubmit }) {
     if (id === "post") {
       setShowModal(true);
     } else if (id === "user") {
-      console.log("HotBar: navegando para o perfil");
+      //console.log("HotBar: navegando para o perfil");
       navigate("/profile");
     } else if (id === "home") {
-      console.log("HotBar: navegando para home");
+      //console.log("HotBar: navegando para home");
       navigate("/posts");
     }
   };
@@ -43,7 +43,7 @@ export default function HotBar({ onAddPostSubmit }) {
   };
 
   const handleAddPostSubmit = (newPost) => {
-    console.log("HotBar: novo post recebido:", newPost);
+    //console.log("HotBar: novo post recebido:", newPost);
     onAddPostSubmit(newPost);
     setShowModal(false);
   };

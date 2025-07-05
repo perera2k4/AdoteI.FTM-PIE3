@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Heart, Calendar, Edit3, Trash2, ArrowLeft, Plus } from 'lucide-react';
+import { User, Heart, Calendar, Trash2, ArrowLeft } from 'lucide-react';
 import authService from '../utils/auth';
 import { API_URL } from '../config/api';
 
@@ -12,14 +12,14 @@ const Profile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('Profile: useEffect executado');
+    //console.log('Profile: useEffect executado');
     
     try {
       const user = authService.getCurrentUser();
-      console.log('Profile: usuário atual:', user);
+      //console.log('Profile: usuário atual:', user);
       
       if (!user) {
-        console.log('Profile: usuário não encontrado, redirecionando...');
+        //console.log('Profile: usuário não encontrado, redirecionando...');
         navigate('/');
         return;
       }
@@ -27,7 +27,7 @@ const Profile = () => {
       setCurrentUser(user);
       fetchUserPosts(user);
     } catch (err) {
-      console.error('Profile: erro no useEffect:', err);
+      //console.error('Profile: erro no useEffect:', err);
       setError('Erro ao carregar dados do usuário');
       setLoading(false);
     }
@@ -35,19 +35,19 @@ const Profile = () => {
 
   const fetchUserPosts = async (user) => {
     try {
-      console.log('Profile: buscando posts do usuário:', user.username);
+      //console.log('Profile: buscando posts do usuário:', user.username);
       setLoading(true);
       
       const response = await authService.authenticatedFetch(`${API_URL}/posts`);
-      console.log('Profile: resposta da API:', response);
+      //console.log('Profile: resposta da API:', response);
       
       if (response.ok) {
         const allPosts = await response.json();
-        console.log('Profile: todos os posts:', allPosts);
+        //console.log('Profile: todos os posts:', allPosts);
         
         // Filtrar posts do usuário atual
         const userPosts = allPosts.filter(post => post.username === user.username);
-        console.log('Profile: posts do usuário:', userPosts);
+        //console.log('Profile: posts do usuário:', userPosts);
         
         // Ordenar por data de criação (mais recente primeiro)
         userPosts.sort((a, b) => {
@@ -58,11 +58,11 @@ const Profile = () => {
         
         setUserPosts(userPosts);
       } else {
-        console.error('Profile: erro na resposta da API:', response.status);
+        //console.error('Profile: erro na resposta da API:', response.status);
         setError('Erro ao carregar suas publicações');
       }
     } catch (err) {
-      console.error('Profile: erro ao buscar posts:', err);
+      //console.error('Profile: erro ao buscar posts:', err);
       setError('Erro ao carregar suas publicações');
     } finally {
       setLoading(false);
@@ -82,15 +82,15 @@ const Profile = () => {
           alert('Erro ao excluir publicação');
         }
       } catch (err) {
-        console.error('Erro ao excluir post:', err);
+        //console.error('Erro ao excluir post:', err);
         alert('Erro ao excluir publicação');
       }
     }
   };
 
-  const handleEditPost = (postId) => {
-    navigate(`/edit-post/${postId}`);
-  };
+  //const handleEditPost = (postId) => {
+  //  navigate(`/edit-post/${postId}`);
+  //};
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Data não disponível';
@@ -106,7 +106,7 @@ const Profile = () => {
     }
   };
 
-  console.log('Profile: renderizando componente', { loading, error, currentUser, userPosts });
+  //console.log('Profile: renderizando componente', { loading, error, currentUser, userPosts });
 
   if (loading) {
     return (

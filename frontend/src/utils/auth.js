@@ -50,10 +50,7 @@ class AuthService {
         this.logout();
       }
     } catch (error) {
-      console.log(
-        "⚠️ Erro na atualização de atividade (ignorado):",
-        error.message
-      );
+      
       // NÃO faz logout em erro de rede para evitar logout desnecessário
     }
   }

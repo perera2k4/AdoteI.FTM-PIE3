@@ -1,8 +1,8 @@
 // Sempre usa o backend do Render (mesmo em desenvolvimento)
 export const API_URL = 'https://adote-iftm-backend.onrender.com';
 
-console.log('🌐 Ambiente:', window.location.hostname);
-console.log('🔗 API_URL configurada:', API_URL);
+//console.log('🌐 Ambiente:', window.location.hostname);
+//console.log('🔗 API_URL configurada:', API_URL);
 
 /* VERSAO ESTÁVEL
 // Detecta automaticamente o ambiente
