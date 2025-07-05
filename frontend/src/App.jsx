@@ -15,11 +15,11 @@ function App() {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('App: rota atual:', location.pathname);
+    //console.log('App: rota atual:', location.pathname);
     
     // Verificar se está autenticado
     if (!authService.isAuthenticated()) {
-      console.log('App: usuário não autenticado, redirecionando...');
+      //console.log('App: usuário não autenticado, redirecionando...');
       window.location.href = '/';
       return;
     }
@@ -39,10 +39,11 @@ function App() {
         const data = await response.json();
         setPosts(data);
       } else {
-        console.error('Erro ao carregar posts');
+        //console.error('Erro ao carregar posts');
       }
     } catch (error) {
-      console.error('Erro ao conectar com o servidor:', error);
+      //console.error('Erro ao conectar com o servidor:', error);
+      console.log('');
     } finally {
       setLoading(false);
     }

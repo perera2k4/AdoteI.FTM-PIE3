@@ -3,19 +3,32 @@ import { Dog, Cat, Upload, Save, Camera } from "lucide-react";
 import Input from "./Input";
 import Button from "./Button";
 import authService from "../utils/auth";
-import { API_URL } from "../config/api";
+import { useNavigate } from "react-router-dom";
 
-function AddPost({ onAddPostSubmit }) {
+function AddPost() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [animalType, setAnimalType] = useState("dog");
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validar tamanho da imagem (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert("A imagem deve ter no máximo 5MB");
+        return;
+      }
+
+      // Validar tipo de arquivo
+      if (!file.type.startsWith('image/')) {
+        alert("Por favor, selecione apenas arquivos de imagem");
+        return;
+      }
+
       setImage(file);
 
       // Criar preview da imagem
@@ -39,45 +52,75 @@ function AddPost({ onAddPostSubmit }) {
     setLoading(true);
 
     const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
+    formData.append("title", title.trim());
+    formData.append("description", description.trim());
     formData.append("animalType", animalType);
     formData.append("image", image);
 
     try {
-      console.log("📤 Enviando post...");
+      //console.log("📤 Enviando post para:", `/upload`);
+      //console.log("📝 Dados do post:", {
+      //  title: title.trim(),
+      //  description: description.trim(),
+      //  animalType,
+      //  imageSize: image.size,
+      //  imageName: image.name,
+      //  imageType: image.type
+      //});
 
-      const response = await authService.authenticatedFetch(
-        `${API_URL}/upload`,
-        {
-          method: "POST",
-          body: formData,
-          headers: {
-            // Remove Content-Type para FormData
-            Authorization: `Session ${authService.getSessionId()}`,
-          },
+      const response = await authService.authenticatedFetch("/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      //console.log("🔄 Resposta recebida:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        //console.error("❌ Erro na resposta:", errorText);
+        
+        let errorMessage = "Erro ao criar o post";
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          //console.error("❌ Erro ao parsear resposta:", e);
+          errorMessage = `Erro do servidor: ${response.status}`;
         }
-      );
+        
+        throw new Error(errorMessage);
+      }
 
       const data = await response.json();
-
-      if (response.ok) {
-        onAddPostSubmit(data.post);
-        setTitle("");
-        setDescription("");
-        setImage(null);
-        setImagePreview(null);
-        setAnimalType("dog");
-        alert("Post criado com sucesso!");
-      } else {
-        alert(data.error || "Erro ao criar o post.");
+      //console.log("✅ Post criado com sucesso:", data);
+      
+      // Adiciona o phoneNumber do usuário atual ao post
+      const currentUser = authService.getCurrentUser();
+      if (currentUser && currentUser.phoneNumber) {
+        data.post.phoneNumber = currentUser.phoneNumber;
       }
+      
+      
+      setTitle("");
+      setDescription("");
+      setImage(null);
+      setImagePreview(null);
+      setAnimalType("dog");
+      // alert("Post criado com sucesso!");
+      navigate("/profile");
+      
     } catch (error) {
-      console.error("Erro ao enviar o post:", error);
+      //console.error("❌ Erro ao enviar o post:", error);
+      
       if (error.message === "Sessão expirada") {
         alert("Sua sessão expirou. Você será redirecionado para o login.");
+      } else if (error.message.includes("Failed to fetch")) {
+        alert("Erro de conexão com o servidor. Verifique sua internet e tente novamente.");
+      } else if (error.message.includes("NetworkError")) {
+        alert("Erro de rede. Verifique sua conexão e tente novamente.");
       } else {
-        alert("Erro ao enviar o post. Verifique sua conexão.");
+        alert(error.message || "Erro ao enviar o post. Tente novamente.");
       }
     }
 
@@ -86,8 +129,6 @@ function AddPost({ onAddPostSubmit }) {
 
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-200 max-w-md mx-auto">
-      {/* Header */}
-
       {/* Content */}
       <div className="p-6 space-y-2">
         {/* Título */}
@@ -186,6 +227,9 @@ function AddPost({ onAddPostSubmit }) {
                 <Camera size={32} className="mx-auto mb-3 text-gray-400" />
                 <p className="text-gray-600 mb-3 text-sm">
                   Adicione uma foto do pet
+                </p>
+                <p className="text-xs text-gray-500">
+                  Máximo 5MB - JPG, PNG, GIF
                 </p>
               </div>
               <label className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors text-sm">

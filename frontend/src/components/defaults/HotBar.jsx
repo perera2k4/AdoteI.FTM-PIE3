@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Heart, Plus, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import AddPost from "../AddPost"; // Importar o componente AddPost
+import AddPost from "../AddPost";
 
 export default function HotBar({ onAddPostSubmit }) {
   const [active, setActive] = useState("home");
-  const [showModal, setShowModal] = useState(false); // Estado para controlar o modal
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -19,17 +19,16 @@ export default function HotBar({ onAddPostSubmit }) {
     setActive(id);
 
     if (id === "post") {
-      setShowModal(true); // Mostrar o modal ao clicar no botão "post"
+      setShowModal(true);
     } else if (id === "user") {
-      console.log("HotBar: navegando para o perfil");
-      navigate("/profile"); // Navegar para a página de perfil
+      //console.log("HotBar: navegando para o perfil");
+      navigate("/profile");
     } else if (id === "home") {
-      console.log("HotBar: navegando para home");
-      navigate("/posts"); // Navegar para a página inicial
+      //console.log("HotBar: navegando para home");
+      navigate("/posts");
     }
   };
 
-  // Função para verificar se o botão está ativo baseado na rota atual
   const isActive = (id) => {
     if (
       id === "home" &&
@@ -41,6 +40,12 @@ export default function HotBar({ onAddPostSubmit }) {
       return true;
     }
     return active === id;
+  };
+
+  const handleAddPostSubmit = (newPost) => {
+    //console.log("HotBar: novo post recebido:", newPost);
+    onAddPostSubmit(newPost);
+    setShowModal(false);
   };
 
   return (
@@ -56,18 +61,13 @@ export default function HotBar({ onAddPostSubmit }) {
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="bg-red-500 text-white px-4 py-2 rounded-md"
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
               >
                 Fechar
               </button>
             </div>
 
-            <AddPost
-              onAddPostSubmit={(newPost) => {
-                onAddPostSubmit(newPost); // Enviar o post para o App
-                setShowModal(false); // Fechar o modal após criar o post
-              }}
-            />
+            <AddPost onAddPostSubmit={handleAddPostSubmit} />
           </div>
         </div>
       )}

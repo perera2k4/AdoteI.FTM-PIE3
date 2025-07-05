@@ -9,12 +9,12 @@ const SessionInfo = () => {
 
   const fetchSessionInfo = async () => {
     try {
-      console.log('📋 Buscando informações da sessão...');
+      //console.log('📋 Buscando informações da sessão...');
       
       // Primeiro, tentar obter dados do usuário localmente
       const currentUser = authService.getCurrentUser();
       if (currentUser) {
-        console.log('👤 Usuário local encontrado:', currentUser);
+        //console.log('👤 Usuário local encontrado:', currentUser);
         setSessionData({
           username: currentUser.username,
           isAdmin: currentUser.isAdmin,
@@ -29,10 +29,10 @@ const SessionInfo = () => {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Dados da sessão do servidor:', data);
+        //console.log('✅ Dados da sessão do servidor:', data);
         setSessionData(data);
       } else {
-        console.warn('⚠️ Erro ao buscar sessão do servidor, usando dados locais');
+        //console.warn('⚠️ Erro ao buscar sessão do servidor, usando dados locais');
         // Fallback para dados locais se servidor não responder
         const fallbackUser = authService.getCurrentUser();
         if (fallbackUser) {
@@ -44,7 +44,7 @@ const SessionInfo = () => {
         }
       }
     } catch (err) {
-      console.warn('⚠️ Erro na sessão (componente):', err.message);
+      //console.warn('⚠️ Erro na sessão (componente):', err.message);
       
       // Fallback para dados locais em caso de erro
       const fallbackUser = authService.getCurrentUser();

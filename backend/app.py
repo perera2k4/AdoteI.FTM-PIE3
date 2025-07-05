@@ -10,7 +10,7 @@ import uuid
 
 app = Flask(__name__)
 
-# CORS
+# CORS mais permissivo
 CORS(app, 
      origins=[
          "http://localhost:3000",
@@ -44,6 +44,15 @@ try:
 except Exception as e:
     print(f"❌ Erro na conexão MongoDB: {e}")
 
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = jsonify({})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "*")
+        response.headers.add('Access-Control-Allow-Methods', "*")
+        return response
+
 @app.after_request
 def after_request(response):
     origin = request.headers.get('Origin')
@@ -56,9 +65,12 @@ def after_request(response):
     
     if origin in allowed_origins:
         response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,Accept,X-Requested-With,Origin'
-        response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
+    else:
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,Accept,X-Requested-With,Origin'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
     
     return response
 
@@ -317,6 +329,11 @@ def upload_post(current_user):
         return jsonify({}), 200
         
     try:
+        print(f"📝 Recebendo upload de: {current_user['username']}")
+        print(f"📋 Headers: {dict(request.headers)}")
+        print(f"📋 Form data: {request.form}")
+        print(f"📋 Files: {request.files}")
+        
         title = request.form.get("title")
         description = request.form.get("description")
         animal_type = request.form.get("animalType")
@@ -324,8 +341,23 @@ def upload_post(current_user):
         username = current_user["username"]
 
         if not title or not description or not animal_type or not image:
-            return jsonify({"error": "Todos os campos são obrigatórios"}), 400
+            missing_fields = []
+            if not title: missing_fields.append("title")
+            if not description: missing_fields.append("description")
+            if not animal_type: missing_fields.append("animalType")
+            if not image: missing_fields.append("image")
+            
+            return jsonify({
+                "error": f"Campos obrigatórios ausentes: {', '.join(missing_fields)}"
+            }), 400
 
+        # Validar tamanho da imagem
+        if len(image.read()) > 5 * 1024 * 1024:  # 5MB
+            return jsonify({"error": "Imagem muito grande. Máximo 5MB."}), 400
+        
+        # Resetar ponteiro do arquivo
+        image.seek(0)
+        
         image_base64 = base64.b64encode(image.read()).decode("utf-8")
 
         post = {
@@ -340,6 +372,7 @@ def upload_post(current_user):
         result = posts_collection.insert_one(post)
         post["_id"] = str(result.inserted_id)
 
+        print(f"✅ Post criado com sucesso: {title} por {username}")
         return jsonify({"message": "Post criado com sucesso!", "post": post}), 201
     except Exception as e:
         print(f"❌ Erro no upload: {e}")
@@ -358,6 +391,31 @@ def get_posts():
         return jsonify(posts), 200
     except Exception as e:
         print(f"❌ Erro ao buscar posts: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/posts/<post_id>", methods=["DELETE", "OPTIONS"])
+@session_required
+def delete_post(current_user, post_id):
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+        
+    try:
+        from bson import ObjectId
+        
+        post = posts_collection.find_one({"_id": ObjectId(post_id)})
+        
+        if not post:
+            return jsonify({"error": "Post não encontrado"}), 404
+        
+        # Verifica se é o dono do post ou admin
+        if post["username"] != current_user["username"] and not current_user.get("isAdmin", False):
+            return jsonify({"error": "Sem permissão para deletar este post"}), 403
+        
+        posts_collection.delete_one({"_id": ObjectId(post_id)})
+        
+        return jsonify({"message": "Post excluído com sucesso!"}), 200
+    except Exception as e:
+        print(f"❌ Erro ao deletar post: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/adotados", methods=["GET"])

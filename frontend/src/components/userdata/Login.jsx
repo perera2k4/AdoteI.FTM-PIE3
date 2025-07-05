@@ -39,7 +39,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     
-    console.log('🔐 Tentando login com sessão...');
+    //console.log('🔐 Tentando login com sessão...');
     
     try {
       const result = await authService.login(username, password);
@@ -53,7 +53,7 @@ export default function Login() {
         showPopup(result.error || "Erro ao fazer login");
       }
     } catch (error) {
-      console.error("Erro no login:", error);
+      //console.error("Erro no login:", error);
       showPopup("Erro ao conectar ao servidor");
     }
     
@@ -87,7 +87,7 @@ export default function Login() {
         showPopup(result.error || "Erro ao realizar cadastro");
       }
     } catch (error) {
-      console.error("Erro no registro:", error);
+      //console.error("Erro no registro:", error);
       showPopup("Erro ao conectar ao servidor");
     }
     
