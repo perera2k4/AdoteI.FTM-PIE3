@@ -3,14 +3,16 @@ import { Dog, Cat, Upload, Save, Camera } from "lucide-react";
 import Input from "./Input";
 import Button from "./Button";
 import authService from "../utils/auth";
+import { useNavigate } from "react-router-dom";
 
-function AddPost({ onAddPostSubmit }) {
+function AddPost() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [animalType, setAnimalType] = useState("dog");
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -99,13 +101,14 @@ function AddPost({ onAddPostSubmit }) {
         data.post.phoneNumber = currentUser.phoneNumber;
       }
       
-      onAddPostSubmit(data.post);
+      
       setTitle("");
       setDescription("");
       setImage(null);
       setImagePreview(null);
       setAnimalType("dog");
-      alert("Post criado com sucesso!");
+      // alert("Post criado com sucesso!");
+      navigate("/profile");
       
     } catch (error) {
       console.error("❌ Erro ao enviar o post:", error);

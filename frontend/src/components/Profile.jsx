@@ -243,13 +243,7 @@ const Profile = () => {
                   
                   {/* Actions */}
                   <div className="absolute top-3 right-3 flex gap-2">
-                    <button
-                      onClick={() => handleEditPost(post._id)}
-                      className="p-2 bg-white/90 hover:bg-white rounded-full shadow-sm transition-colors duration-200"
-                      title="Editar publicação"
-                    >
-                      <Edit3 size={16} className="text-blue-600" />
-                    </button>
+                    
                     <button
                       onClick={() => handleDeletePost(post._id)}
                       className="p-2 bg-white/90 hover:bg-white rounded-full shadow-sm transition-colors duration-200"
