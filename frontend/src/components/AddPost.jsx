@@ -45,39 +45,68 @@ function AddPost({ onAddPostSubmit }) {
     formData.append("image", image);
 
     try {
-      console.log("📤 Enviando post...");
+      console.log("📤 Enviando post para:", `${API_URL}/upload`);
+      console.log("📝 Dados do post:", {
+        title,
+        description,
+        animalType,
+        imageSize: image.size,
+        imageName: image.name
+      });
 
       const response = await authService.authenticatedFetch(
         `${API_URL}/upload`,
         {
           method: "POST",
           body: formData,
-          headers: {
-            // Remove Content-Type para FormData
-            Authorization: `Session ${authService.getSessionId()}`,
-          },
+          // authenticatedFetch já adiciona o header Authorization
+          // e remove Content-Type para FormData
         }
       );
 
-      const data = await response.json();
+      console.log("🔄 Resposta recebida:", response.status);
 
-      if (response.ok) {
-        onAddPostSubmit(data.post);
-        setTitle("");
-        setDescription("");
-        setImage(null);
-        setImagePreview(null);
-        setAnimalType("dog");
-        alert("Post criado com sucesso!");
-      } else {
-        alert(data.error || "Erro ao criar o post.");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Erro na resposta:", errorText);
+        let errorMessage = "Erro ao criar o post";
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          console.error("❌ Erro ao parsear resposta:", e);
+        }
+        
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
+      console.log("✅ Post criado com sucesso:", data);
+      
+      // Adiciona o phoneNumber do usuário atual ao post
+      const currentUser = authService.getCurrentUser();
+      if (currentUser && currentUser.phoneNumber) {
+        data.post.phoneNumber = currentUser.phoneNumber;
+      }
+      
+      onAddPostSubmit(data.post);
+      setTitle("");
+      setDescription("");
+      setImage(null);
+      setImagePreview(null);
+      setAnimalType("dog");
+      alert("Post criado com sucesso!");
+      
     } catch (error) {
-      console.error("Erro ao enviar o post:", error);
+      console.error("❌ Erro ao enviar o post:", error);
+      
       if (error.message === "Sessão expirada") {
         alert("Sua sessão expirou. Você será redirecionado para o login.");
+      } else if (error.message.includes("Failed to fetch")) {
+        alert("Erro de conexão com o servidor. Verifique sua internet e tente novamente.");
       } else {
-        alert("Erro ao enviar o post. Verifique sua conexão.");
+        alert(error.message || "Erro ao enviar o post. Tente novamente.");
       }
     }
 
@@ -86,8 +115,6 @@ function AddPost({ onAddPostSubmit }) {
 
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-200 max-w-md mx-auto">
-      {/* Header */}
-
       {/* Content */}
       <div className="p-6 space-y-2">
         {/* Título */}
