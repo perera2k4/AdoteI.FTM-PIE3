@@ -175,8 +175,6 @@ def home():
             "session-info": "GET /session-info",
             "posts": "GET /posts",
             "upload": "POST /upload (protegida)",
-            "user/posts": "GET /user/posts (protegida)",
-            "posts/<id>": "DELETE /posts/<id> (protegida)",
             "adotados": "GET /adotados"
         }
     }), 200
@@ -253,7 +251,7 @@ def login():
 
         return jsonify({
             "message": "Login realizado com sucesso!",
-            "sessionId": session_id,  # Mudança aqui: era "session_id"
+            "session_id": session_id,
             "user": {
                 "username": user["username"],
                 "isAdmin": user.get("isAdmin", False),
@@ -319,31 +317,16 @@ def upload_post(current_user):
         return jsonify({}), 200
         
     try:
-        print(f"📤 Recebendo upload do usuário: {current_user['username']}")
-        
         title = request.form.get("title")
         description = request.form.get("description")
         animal_type = request.form.get("animalType")
         image = request.files.get("image")
         username = current_user["username"]
 
-        print(f"📝 Dados recebidos: title={title}, description={description}, animalType={animal_type}, image={image.filename if image else None}")
-
         if not title or not description or not animal_type or not image:
-            missing_fields = []
-            if not title: missing_fields.append("title")
-            if not description: missing_fields.append("description")
-            if not animal_type: missing_fields.append("animalType")
-            if not image: missing_fields.append("image")
-            return jsonify({"error": f"Campos obrigatórios faltando: {', '.join(missing_fields)}"}), 400
+            return jsonify({"error": "Todos os campos são obrigatórios"}), 400
 
-        # Verificar se o arquivo de imagem não está vazio
-        if image.filename == '':
-            return jsonify({"error": "Nenhuma imagem selecionada"}), 400
-
-        # Converter imagem para base64
-        image_data = image.read()
-        image_base64 = base64.b64encode(image_data).decode("utf-8")
+        image_base64 = base64.b64encode(image.read()).decode("utf-8")
 
         post = {
             "title": title,
@@ -357,7 +340,6 @@ def upload_post(current_user):
         result = posts_collection.insert_one(post)
         post["_id"] = str(result.inserted_id)
 
-        print(f"✅ Post criado com sucesso: {post['_id']}")
         return jsonify({"message": "Post criado com sucesso!", "post": post}), 201
     except Exception as e:
         print(f"❌ Erro no upload: {e}")
@@ -376,51 +358,6 @@ def get_posts():
         return jsonify(posts), 200
     except Exception as e:
         print(f"❌ Erro ao buscar posts: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/user/posts", methods=["GET", "OPTIONS"])
-@session_required
-def get_user_posts(current_user):
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-        
-    try:
-        posts = list(posts_collection.find({"username": current_user["username"]}))
-        for post in posts:
-            post["_id"] = str(post["_id"])
-            post["phoneNumber"] = current_user.get("phoneNumber", None)
-        
-        return jsonify(posts), 200
-    except Exception as e:
-        print(f"❌ Erro ao buscar posts do usuário: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/posts/<post_id>", methods=["DELETE", "OPTIONS"])
-@session_required
-def delete_post(current_user, post_id):
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-        
-    try:
-        from bson import ObjectId
-        
-        # Verificar se o post existe e pertence ao usuário
-        post = posts_collection.find_one({"_id": ObjectId(post_id), "username": current_user["username"]})
-        
-        if not post:
-            return jsonify({"error": "Post não encontrado ou não autorizado"}), 404
-        
-        # Deletar o post
-        result = posts_collection.delete_one({"_id": ObjectId(post_id)})
-        
-        if result.deleted_count == 1:
-            print(f"✅ Post deletado: {post_id}")
-            return jsonify({"message": "Post deletado com sucesso!"}), 200
-        else:
-            return jsonify({"error": "Erro ao deletar post"}), 500
-            
-    except Exception as e:
-        print(f"❌ Erro ao deletar post: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/adotados", methods=["GET"])
