@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Interativo: AdoteI.FTM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 400px; max-height: 50vh; }
+        .nav-link { transition: color 0.3s; }
+        .nav-link:hover { color: #8B5CF6; }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out, padding 0.5s ease-out; }
+        .accordion-button.open + .accordion-content { max-height: 500px; padding-top: 1rem; padding-bottom: 1rem; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <img class="w-32" src="./logo.png" alt="Logo">
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#problema" class="nav-link font-medium text-slate-600">O Problema</a>
+                    <a href="#solucao" class="nav-link font-medium text-slate-600">A Solução</a>
+                    <a href="#cronograma" class="nav-link font-medium text-slate-600">Cronograma</a>
+                    <a href="#arquitetura" class="nav-link font-medium text-slate-600">Arquitetura</a>
+                    <a href="#equipe" class="nav-link font-medium text-slate-600">Equipe</a>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="p-2 rounded-md text-slate-600 hover:text-purple-600 hover:bg-slate-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="mobile-menu" class="hidden md:hidden py-4">
+                <a href="#problema" class="block py-2 px-4 text-sm text-slate-600 hover:bg-purple-50 rounded">O Problema</a>
+                <a href="#solucao" class="block py-2 px-4 text-sm text-slate-600 hover:bg-purple-50 rounded">A Solução</a>
+                <a href="#cronograma" class="block py-2 px-4 text-sm text-slate-600 hover:bg-purple-50 rounded">Cronograma</a>
+                <a href="#arquitetura" class="block py-2 px-4 text-sm text-slate-600 hover:bg-purple-50 rounded">Arquitetura</a>
+                <a href="#equipe" class="block py-2 px-4 text-sm text-slate-600 hover:bg-purple-50 rounded">Equipe</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="inicio" class="py-20 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900">
+                    <span class="text-purple-600">Adote I.F.</span> Conectando Lares e Corações
+                </h1>
+                <p class="mt-4 text-lg md:text-xl text-slate-600 max-w-3xl mx-auto">Um relatório interativo sobre o desenvolvimento do sistema de adoção de animais para o IFTM - Campus Ituiutaba.</p>
+                <div class="mt-8 flex justify-center space-x-4">
+                    <a href="https://adote-i-ftm-pie-3.vercel.app" target="_blank" class="bg-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors">Acessar Protótipo</a>
+                    <a href="https://www.youtube.com/watch?v=v7Z4Efh6on8" target="_blank" class="bg-slate-200 text-slate-800 font-bold py-3 px-6 rounded-lg hover:bg-slate-300 transition-colors">Ver Vídeo</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="problema" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">A Realidade dos Animais no Campus</h2>
+                    <p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">O projeto nasceu de uma necessidade real observada no ambiente do IFTM, buscando uma solução humana e tecnológica para um problema crescente.</p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-xl shadow-md border border-slate-200/50">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 text-purple-600 text-2xl">🐾</div>
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">Animais Abandonados</h3>
+                        <p class="mt-2 text-slate-600">Um número crescente de cães abandonados circulando pelo campus, vivendo em situação de vulnerabilidade.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-xl shadow-md border border-slate-200/50">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 text-purple-600 text-2xl">⚕️</div>
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">Riscos à Saúde Pública</h3>
+                        <p class="mt-2 text-slate-600">Animais sem os devidos cuidados veterinários representam riscos tanto para eles quanto para a comunidade acadêmica.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-xl shadow-md border border-slate-200/50">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 text-purple-600 text-2xl">🤝</div>
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">Falta de Centralização</h3>
+                        <p class="mt-2 text-slate-600">A ausência de um sistema unificado dificultava a organização de adoções e o engajamento de voluntários de forma eficaz.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="solucao" class="py-16 sm:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Nossa Solução: Uma Plataforma Integrada</h2>
+                    <p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">Adote I.F. é uma plataforma web desenvolvida para ser a ponte entre os animais que precisam de um lar e a comunidade disposta a ajudar.</p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-slate-50 p-8 rounded-xl border border-slate-200/80">
+                        <h3 class="text-xl font-bold text-purple-600">Para Adotantes</h3>
+                        <p class="mt-2 text-slate-600">Usuários podem navegar pelos perfis dos animais, ver fotos, detalhes e entrar em contato direto com o responsável para iniciar o processo de adoção.</p>
+                    </div>
+                    <div class="bg-slate-50 p-8 rounded-xl border border-slate-200/80">
+                        <h3 class="text-xl font-bold text-purple-600">Para a Comunidade</h3>
+                        <p class="mt-2 text-slate-600">A plataforma permite que qualquer pessoa cadastre um animal para adoção, gerencie denúncias e se ofereça como voluntário, fortalecendo a rede de apoio.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="cronograma" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Cronograma de Desenvolvimento</h2>
+                    <p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">Visualização das principais etapas do projeto, desde a concepção até a entrega do protótipo funcional.</p>
+                </div>
+                <div class="mt-12">
+                    <div class="chart-container">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="arquitetura" class="py-16 sm:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Arquitetura e Tecnologias</h2>
+                    <p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">As ferramentas e a estrutura que dão vida ao Adote I.F.</p>
+                </div>
+                <div class="mt-12">
+                    <h3 class="text-2xl font-bold text-center text-slate-800 mb-8">Tecnologias Utilizadas</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <h4 class="font-bold text-lg">Frontend</h4>
+                            <p class="text-purple-600 font-medium">React.js</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <h4 class="font-bold text-lg">Backend</h4>
+                            <p class="text-purple-600 font-medium">Python 3.11</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <h4 class="font-bold text-lg">Banco de Dados</h4>
+                            <p class="text-purple-600 font-medium">MongoDB</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <h4 class="font-bold text-lg">Licença</h4>
+                            <p class="text-purple-600 font-medium">MIT License</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="equipe" class="py-16 sm:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                 <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">A equipe por trás do projeto</h2>
+                    <p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">Conheça os estudantes responsáveis pelo desenvolvimento do Adote I.F.</p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                     <div class="text-center bg-slate-50 p-8 rounded-xl border border-slate-200/80">
+                        <img class="mx-auto h-24 w-24 rounded-full bg-purple-200 flex items-center justify-center text-3xl font-bold text-purple-700" src="bruno.jpg" alt="Bruno">
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">Bruno Pereira</h3>
+                        <p class="mt-1 text-purple-600 font-medium">Desenvolvimento Full-stack</p>
+                    </div>
+                    <div class="text-center bg-slate-50 p-8 rounded-xl border border-slate-200/80">
+                        <img class="mx-auto h-24 w-24 rounded-full bg-purple-200 flex items-center justify-center text-3xl font-bold text-purple-700" src="diogenes.jpg" alt="Diogenes">
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">Diógenes Cassimiro</h3>
+                        <p class="mt-1 text-purple-600 font-medium">Desenvolvimento Front-end</p>
+                    </div>
+                    <div class="text-center bg-slate-50 p-8 rounded-xl border border-slate-200/80">
+                        <div class="mx-auto h-24 w-24 rounded-full bg-purple-200 flex items-center justify-center text-3xl font-bold text-purple-700">RG</div>
+                        <h3 class="mt-6 text-xl font-bold text-slate-900">Ronald Abdias</h3>
+                        <p class="mt-1 text-purple-600 font-medium">Desenvolvimento do Banco de Dados e QA</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-white">
+        <div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+            <p class="font-bold text-lg">Projeto Integrador Extensionista III</p>
+            <p class="text-slate-300">IFTM - Campus Ituiutaba | Análise e Desenvolvimento de Sistemas</p>
+            <p class="mt-4 text-sm text-slate-400">&copy; 2025 AdoteI.FTM. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            const accordionContainer = document.getElementById('accordion-container');
+            if(accordionContainer) {
+                accordionContainer.addEventListener('click', function(e) {
+                    const button = e.target.closest('.accordion-button');
+                    if (!button) return;
+
+                    const allButtons = this.querySelectorAll('.accordion-button');
+                    allButtons.forEach(btn => {
+                        if (btn !== button) {
+                            btn.classList.remove('open');
+                            btn.querySelector('.accordion-icon').style.transform = 'rotate(0deg)';
+                        }
+                    });
+
+                    button.classList.toggle('open');
+                    const icon = button.querySelector('.accordion-icon');
+                    if (button.classList.contains('open')) {
+                        icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                });
+            }
+
+            const timelineCtx = document.getElementById('timelineChart');
+            if (timelineCtx) {
+                const projectData = {
+                    labels: ['Testes', 'Engenharia do Software', 'Desenvolvimento Back-end', 'Desenvolvimento Front-end', 'Publicação e Divulgação'],
+                    datasets: [{
+                        label: 'Período de Desenvolvimento',
+                        data: [
+                            { x: [new Date('2025-05-19'), new Date('2025-05-26')], y: 'Testes' },
+                            { x: [new Date('2025-05-29'), new Date('2025-06-05')], y: 'Engenharia do Software' },
+                            { x: [new Date('2025-06-05'), new Date('2025-06-12')], y: 'Desenvolvimento Back-end' },
+                            { x: [new Date('2025-06-12'), new Date('2025-06-19')], y: 'Desenvolvimento Front-end' },
+                            { x: [new Date('2025-06-24'), new Date('2025-07-01')], y: 'Publicação e Divulgação' },
+                        ],
+                        backgroundColor: [
+                            'rgba(167, 139, 250, 0.7)',
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(124, 58, 237, 0.7)',
+                            'rgba(109, 40, 217, 0.7)',
+                            'rgba(91, 33, 182, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(167, 139, 250, 1)',
+                            'rgba(139, 92, 246, 1)',
+                            'rgba(124, 58, 237, 1)',
+                            'rgba(109, 40, 217, 1)',
+                            'rgba(91, 33, 182, 1)'
+                        ],
+                        borderWidth: 1,
+                        barPercentage: 0.5,
+                        categoryPercentage: 0.7,
+                        borderSkipped: false,
+                        borderRadius: 5,
+                    }]
+                };
+
+                new Chart(timelineCtx, {
+                    type: 'bar',
+                    data: projectData,
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const start = new Date(context.raw.x[0]).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+                                        const end = new Date(context.raw.x[1]).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+                                        return `${context.dataset.label}: ${start} - ${end}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'week',
+                                    tooltipFormat: 'dd/MM/yyyy',
+                                    displayFormats: {
+                                        week: 'dd MMM'
+                                    }
+                                },
+                                min: '2025-05-15',
+                                max: '2025-07-05',
+                                grid: {
+                                    color: 'rgba(203, 213, 225, 0.5)'
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
