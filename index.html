@@ -12,6 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
     <style>
         body { font-family: 'Inter', sans-serif; }
         .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 400px; max-height: 50vh; }
@@ -53,7 +54,7 @@
     </header>
 
     <main>
-        <section id="inicio" class="py-20 bg-white">
+        <section id="inicio" class="py-20 bg-white" data-aos="fade-up">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900">
                     <span class="text-purple-600">Adote I.F.</span> Conectando Lares e Corações
@@ -61,29 +62,31 @@
                 <p class="mt-4 text-lg md:text-xl text-slate-600 max-w-3xl mx-auto">Um relatório interativo sobre o desenvolvimento do sistema de adoção de animais para o IFTM - Campus Ituiutaba.</p>
                 <div class="mt-8 flex justify-center space-x-4">
                     <a href="https://adote-i-ftm-pie-3.vercel.app" target="_blank" class="bg-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors">Acessar Protótipo</a>
+                    <a href="https://github.com/perera2k4/AdoteI.FTM-PIE3" target="_blank" class="bg-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors">Diretório GitHub</a>
+                    <a href="https://www.canva.com/design/DAGsDaTPazg/v5C61CAPHRs20gTygfQSog/edit" target="_blank" class="bg-slate-200 text-slate-800 font-bold py-3 px-6 rounded-lg hover:bg-slate-300 transition-colors">Documento</a>
                     <a href="https://www.youtube.com/watch?v=v7Z4Efh6on8" target="_blank" class="bg-slate-200 text-slate-800 font-bold py-3 px-6 rounded-lg hover:bg-slate-300 transition-colors">Ver Vídeo</a>
                 </div>
             </div>
         </section>
 
-        <section id="problema" class="py-16 sm:py-24">
+        <section id="problema" class="py-16 sm:py-24" data-aos="fade-up">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
                     <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">A Realidade dos Animais no Campus</h2>
                     <p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">O projeto nasceu de uma necessidade real observada no ambiente do IFTM, buscando uma solução humana e tecnológica para um problema crescente.</p>
                 </div>
                 <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-white p-8 rounded-xl shadow-md border border-slate-200/50">
+                    <div class="bg-white p-8 rounded-xl shadow-md border border-slate-200/50" data-aos="fade-up" data-aos-delay="0">
                         <div class="flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 text-purple-600 text-2xl">🐾</div>
                         <h3 class="mt-6 text-xl font-bold text-slate-900">Animais Abandonados</h3>
                         <p class="mt-2 text-slate-600">Um número crescente de cães abandonados circulando pelo campus, vivendo em situação de vulnerabilidade.</p>
                     </div>
-                    <div class="bg-white p-8 rounded-xl shadow-md border border-slate-200/50">
+                    <div class="bg-white p-8 rounded-xl shadow-md border border-slate-200/50" data-aos="fade-up" data-aos-delay="100">
                         <div class="flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 text-purple-600 text-2xl">⚕️</div>
                         <h3 class="mt-6 text-xl font-bold text-slate-900">Riscos à Saúde Pública</h3>
                         <p class="mt-2 text-slate-600">Animais sem os devidos cuidados veterinários representam riscos tanto para eles quanto para a comunidade acadêmica.</p>
                     </div>
-                    <div class="bg-white p-8 rounded-xl shadow-md border border-slate-200/50">
+                    <div class="bg-white p-8 rounded-xl shadow-md border border-slate-200/50" data-aos="fade-up" data-aos-delay="200">
                         <div class="flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 text-purple-600 text-2xl">🤝</div>
                         <h3 class="mt-6 text-xl font-bold text-slate-900">Falta de Centralização</h3>
                         <p class="mt-2 text-slate-600">A ausência de um sistema unificado dificultava a organização de adoções e o engajamento de voluntários de forma eficaz.</p>
@@ -92,7 +95,7 @@
             </div>
         </section>
 
-        <section id="solucao" class="py-16 sm:py-24 bg-white">
+        <section id="solucao" class="py-16 sm:py-24 bg-white" data-aos="fade-up">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
                     <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Nossa Solução: Uma Plataforma Integrada</h2>
@@ -111,7 +114,7 @@
             </div>
         </section>
         
-        <section id="cronograma" class="py-16 sm:py-24">
+        <section id="cronograma" class="py-16 sm:py-24" data-aos="fade-up">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
                     <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Cronograma de Desenvolvimento</h2>
@@ -125,7 +128,7 @@
             </div>
         </section>
         
-        <section id="arquitetura" class="py-16 sm:py-24 bg-white">
+        <section id="arquitetura" class="py-16 sm:py-24 bg-white" data-aos="fade-up">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
                     <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Arquitetura e Tecnologias</h2>
@@ -134,28 +137,34 @@
                 <div class="mt-12">
                     <h3 class="text-2xl font-bold text-center text-slate-800 mb-8">Tecnologias Utilizadas</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                            <h4 class="font-bold text-lg">Frontend</h4>
-                            <p class="text-purple-600 font-medium">React.js</p>
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center">
+                            <img src="icons/logo_vercel.svg" alt="Vercel" class="h-8 w-8 mb-2" title="Hospedado na Vercel" />
+                            <h4 class="font-bold text-lg mb-2">Frontend</h4>
+                            <div class="flex items-center justify-center gap-2">
+                                <p class="text-purple-600 font-medium">React.js</p>
+                            </div>
                         </div>
-                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                            <h4 class="font-bold text-lg">Backend</h4>
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center">
+                            <img src="icons/logo_render.jpg" alt="Render" class="h-8 w-8 mb-2" title="Hospedado na Render" />
+                            <h4 class="font-bold text-lg mb-2">Backend</h4>
                             <p class="text-purple-600 font-medium">Python 3.11</p>
                         </div>
-                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                            <h4 class="font-bold text-lg">Banco de Dados</h4>
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center">
+                            <img src="icons/logo_atlas.png" alt="MongoDB Atlas" class="h-8 w-8 mb-2" title="Hospedado no MongoDB Atlas" />
+                            <h4 class="font-bold text-lg mb-2">Banco de Dados</h4>
                             <p class="text-purple-600 font-medium">MongoDB</p>
                         </div>
-                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                            <h4 class="font-bold text-lg">Licença</h4>
-                            <p class="text-purple-600 font-medium">MIT License</p>
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center">
+                            <img src="icons/logo_gitHub.png" alt="GitHub Pages" class="h-8 w-8 mb-2" title="Hospedado no GitHub Pages" />
+                            <h4 class="font-bold text-lg mb-2">Landing-Page</h4>
+                            <p class="text-purple-600 font-medium">GitHub Pages</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="equipe" class="py-16 sm:py-24 bg-white">
+        <section id="equipe" class="py-16 sm:py-24 bg-white" data-aos="fade-up">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                  <div class="text-center">
                     <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">A equipe por trás do projeto</h2>
@@ -186,10 +195,15 @@
         <div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
             <p class="font-bold text-lg">Projeto Integrador Extensionista III</p>
             <p class="text-slate-300">IFTM - Campus Ituiutaba | Análise e Desenvolvimento de Sistemas</p>
+            <p class="mt-4 text-sm text-slate-400"> MIT License</p>
             <p class="mt-4 text-sm text-slate-400">&copy; 2025 AdoteI.FTM. Todos os direitos reservados.</p>
         </div>
     </footer>
 
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const mobileMenuButton = document.getElementById('mobile-menu-button');
