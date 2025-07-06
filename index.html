@@ -31,11 +31,11 @@
                     <img class="w-32" src="./logo.png" alt="Logo">
                 </div>
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="#problema" class="nav-link font-medium text-slate-600 border-b-2 border-transparent hover:border-purple-500 transition-all">O Problema</a>
-                    <a href="#solucao" class="nav-link font-medium text-slate-600 border-b-2 border-transparent hover:border-purple-500 transition-all">A Solução</a>
-                    <a href="#cronograma" class="nav-link font-medium text-slate-600 border-b-2 border-transparent hover:border-purple-500 transition-all">Cronograma</a>
-                    <a href="#arquitetura" class="nav-link font-medium text-slate-600 border-b-2 border-transparent hover:border-purple-500 transition-all">Arquitetura</a>
-                    <a href="#equipe" class="nav-link font-medium text-slate-600 border-b-2 border-transparent hover:border-purple-500 transition-all">Equipe</a>
+                    <a href="#problema" class="nav-link font-medium text-slate-600 border-b-2 border-transparent hover:border-purple-500 transition-all focus:outline-purple-500">O Problema</a>
+                    <a href="#solucao" class="nav-link font-medium text-slate-600 border-b-2 border-transparent hover:border-purple-500 transition-all focus:outline-purple-500">A Solução</a>
+                    <a href="#cronograma" class="nav-link font-medium text-slate-600 border-b-2 border-transparent hover:border-purple-500 transition-all focus:outline-purple-500">Cronograma</a>
+                    <a href="#arquitetura" class="nav-link font-medium text-slate-600 border-b-2 border-transparent hover:border-purple-500 transition-all focus:outline-purple-500">Arquitetura</a>
+                    <a href="#equipe" class="nav-link font-medium text-slate-600 border-b-2 border-transparent hover:border-purple-500 transition-all focus:outline-purple-500">Equipe</a>
                 </div>
                 <div class="md:hidden">
                     <button id="mobile-menu-button" class="p-2 rounded-md text-slate-600 hover:text-purple-600 hover:bg-slate-100">
@@ -137,24 +137,24 @@
                 <div class="mt-12">
                     <h3 class="text-2xl font-bold text-center text-slate-800 mb-8">Tecnologias Utilizadas</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center">
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center" data-aos="fade-up" >
                             <img src="icons/logo_vercel.svg" alt="Vercel" class="h-8 w-8 mb-2" title="Hospedado na Vercel" />
                             <h4 class="font-bold text-lg mb-2">Frontend</h4>
                             <div class="flex items-center justify-center gap-2">
                                 <p class="text-purple-600 font-medium">React.js</p>
                             </div>
                         </div>
-                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center">
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center" data-aos="fade-up" data-aos-delay="50">
                             <img src="icons/logo_render.jpg" alt="Render" class="h-8 w-8 mb-2" title="Hospedado na Render" />
                             <h4 class="font-bold text-lg mb-2">Backend</h4>
                             <p class="text-purple-600 font-medium">Python 3.11</p>
                         </div>
-                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center">
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center" data-aos="fade-up" data-aos-delay="100">
                             <img src="icons/logo_atlas.png" alt="MongoDB Atlas" class="h-8 w-8 mb-2" title="Hospedado no MongoDB Atlas" />
                             <h4 class="font-bold text-lg mb-2">Banco de Dados</h4>
                             <p class="text-purple-600 font-medium">MongoDB</p>
                         </div>
-                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center">
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center" data-aos="fade-up" data-aos-delay="150">
                             <img src="icons/logo_gitHub.png" alt="GitHub Pages" class="h-8 w-8 mb-2" title="Hospedado no GitHub Pages" />
                             <h4 class="font-bold text-lg mb-2">Landing-Page</h4>
                             <p class="text-purple-600 font-medium">GitHub Pages</p>
@@ -325,6 +325,31 @@
                 });
             }
         });
+        document.addEventListener('DOMContentLoaded', function () {
+    const sections = ['problema', 'solucao', 'cronograma', 'arquitetura', 'equipe'];
+    const navLinks = sections.map(id => document.querySelector(`a[href="#${id}"]`));
+
+    function onScroll() {
+        let scrollPos = window.scrollY + 120; // ajuste para header fixo
+        let activeIndex = 0;
+        sections.forEach((id, idx) => {
+            const section = document.getElementById(id);
+            if (section && section.offsetTop <= scrollPos) {
+                activeIndex = idx;
+            }
+        });
+        navLinks.forEach((link, idx) => {
+            if (idx === activeIndex) {
+                link.classList.add('border-purple-500');
+            } else {
+                link.classList.remove('border-purple-500');
+            }
+        });
+    }
+
+    window.addEventListener('scroll', onScroll);
+    onScroll(); // inicializa ao carregar
+});
     </script>
 </body>
 </html>
