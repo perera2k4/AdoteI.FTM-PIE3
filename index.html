@@ -213,6 +213,12 @@
                 mobileMenu.classList.toggle('hidden');
             });
 
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                });
+            });
+
             const accordionContainer = document.getElementById('accordion-container');
             if(accordionContainer) {
                 accordionContainer.addEventListener('click', function(e) {
