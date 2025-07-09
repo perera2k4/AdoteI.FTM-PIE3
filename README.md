@@ -5,7 +5,7 @@
   <p>Projeto Integrador Extensionista III</p>
 </div>
 
-# 🐶 Adote I.F - Sistema de Adoção de Pets
+# 🐶 Adote IF - Sistema de Adoção de Pets
 
 ## 📋 Sobre o Projeto
 
