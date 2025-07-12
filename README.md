@@ -363,7 +363,7 @@ gunicorn app:app    # Servidor de produção
 
 - **Bruno Carvalho** - Desenvolvedor Full Stack
 - **Diogenes Cassimiro** - Desenvolvedor Front-end
-- **Ronald Abdias** - Analista de QA
+- **Ronald Abdias** - Analista de QA e Desenvolvedor BD
 
 ---
 
@@ -374,6 +374,6 @@ Para dúvidas ou problemas:
 2. Consulte os logs do console (F12 no navegador)
 3. Verifique se todos os serviços estão rodando
 4. Confirme as configurações de ambiente
-5. Entre em contato via e-mail: bruno.carvalho@estudante.iftm.edu.br
+5. Entre em contato via e-mail: bruno.carvalho@estudante.iftm.edu.br, diogenes.cassimiro@estudante.iftm.edu.br, ronald.abdias@estudante.iftm.edu.br
 
 **Desenvolvido para facilitar a adoção de pets!** 🐶🐱
