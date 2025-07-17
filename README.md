@@ -6,10 +6,15 @@
 </div>
 
 # 🐶 Adote IF - Sistema de Adoção de Pets
+[![Preview do site](https://raw.githubusercontent.com/perera2k4/AdoteI.FTM-PIE3/refs/heads/main/preview.png)](https://perera2k4.github.io/AdoteI.FTM-PIE3/)
 
 ## 📋 Sobre o Projeto
 
 O **Adote I.F** é uma plataforma web completa para adoção de pets, desenvolvida como um projeto acadêmico. O sistema permite que usuários criem publicações de animais disponíveis para adoção e se conectem via WhatsApp para facilitar o processo de adoção.
+
+<a href="https://www.youtube.com/shorts/2iIqQzVAL50" target="_blank">
+  <img src="https://img.youtube.com/vi/2iIqQzVAL50/0.jpg" target="_blank" alt="Vídeo de Demonstração" width="600"/>
+</a>
 
 ## 🏗️ Arquitetura do Sistema
 
